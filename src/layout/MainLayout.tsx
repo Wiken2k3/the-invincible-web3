@@ -4,17 +4,45 @@ import {
   Button,
   Group,
   Text,
-  Box,
   Image,
   NavLink,
+  Divider,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { Link, Outlet, useLocation } from "react-router-dom";
-
-// 👉 Import logo của bạn tại đây
-// Ví dụ:
+import { motion } from "framer-motion";
 import logoImg from "../assets/logo.png";
 
+/* ================================
+   🎨 UI CONSTANTS
+================================ */
+const headerStyle = {
+  backdropFilter: "blur(15px)",
+  background: "rgba(18, 18, 30, 0.55)",
+  borderBottom: "1px solid rgba(255,255,255,0.08)",
+};
+
+const navbarStyle = {
+  backdropFilter: "blur(20px)",
+  background: "rgba(20, 20, 30, 0.18)",
+  borderRight: "1px solid rgba(255,255,255,0.05)",
+  paddingTop: "14px",
+};
+
+const gradientText = {
+  background: "linear-gradient(90deg,#A259FF,#00E5FF,#A259FF)",
+  WebkitBackgroundClip: "text",
+  color: "transparent",
+};
+
+const walletBtnShadow = {
+  base: "0 0 12px rgba(0, 229, 255, 0.45)",
+  hover: "0 0 18px rgba(0, 229, 255, 0.85)",
+};
+
+/* ================================
+   🔥 LAYOUT
+================================ */
 export default function MainLayout() {
   const [opened, { toggle }] = useDisclosure();
   const location = useLocation();
@@ -30,86 +58,121 @@ export default function MainLayout() {
       padding="lg"
       styles={{
         main: {
-          background: "radial-gradient(circle at top, #18122B 0%, #0A0A0F 70%)",
+          background:
+            "radial-gradient(circle at top, #1A122E 0%, #09080F 80%)",
           color: "#fff",
         },
       }}
     >
       {/* HEADER */}
-      <AppShell.Header
-        style={{
-          backdropFilter: "blur(12px)",
-          background: "rgba(20,20,30,0.6)",
-          borderBottom: "1px solid rgba(255,255,255,0.08)",
-        }}
-      >
-        <Group justify="space-between" h="100%" px="md">
+      <AppShell.Header style={headerStyle}>
+        <Group justify="space-between" px="md" h="100%">
           <Group>
-            {/* Burger (Mobile) */}
             <Burger opened={opened} onClick={toggle} hiddenFrom="sm" size="sm" />
 
-            {/* LOGO + TITLE */}
-            <Group gap="xs">
+            {/* LOGO + TEXT */}
+            <Group gap="xs" style={{ alignItems: "center" }}>
               <Image
                 src={logoImg}
-                height={50}
-                width={50}
+                height={42}
+                width={42}
                 radius="md"
                 style={{ objectFit: "contain" }}
               />
-              <Text
-                fw={700}
-                size="xl"
-                style={{ letterSpacing: "1px", userSelect: "none" }}
-              >
-                {/* THE INVINCIBLE */}
-              </Text>
+
+              {/* <Text fw={800} size="lg" style={gradientText}>
+                THE INVINCIBLE
+              </Text> */}
             </Group>
           </Group>
 
-          <Button size="sm" radius="md">
+          {/* CONNECT WALLET */}
+          <Button
+            size="sm"
+            radius="md"
+            style={{
+              background: "linear-gradient(135deg,#A259FF,#00E5FF)",
+              boxShadow: walletBtnShadow.base,
+              transition: "0.25s ease",
+            }}
+            onMouseEnter={(e) =>
+              (e.currentTarget.style.boxShadow = walletBtnShadow.hover)
+            }
+            onMouseLeave={(e) =>
+              (e.currentTarget.style.boxShadow = walletBtnShadow.base)
+            }
+          >
             Connect Wallet
           </Button>
         </Group>
       </AppShell.Header>
 
       {/* SIDEBAR */}
-      <AppShell.Navbar
-        p="md"
-        style={{
-          backdropFilter: "blur(14px)",
-          background: "rgba(20,20,30,0.35)",
-          borderRight: "1px solid rgba(255,255,255,0.06)",
-        }}
-      >
-        <Text fw={600} mb="sm" size="lg">
+      <AppShell.Navbar style={navbarStyle}>
+        {/* <Text fw={700} size="lg" mb="xs" style={{ opacity: 0.85 }}>
           Navigation
-        </Text>
+        </Text> */}
 
-        <NavLink
-          label="Trang chủ"
-          component={Link}
-          to="/"
-          active={location.pathname === "/"}
-        />
-        <NavLink
-          label="Game"
-          component={Link}
-          to="/game"
-          active={location.pathname === "/game"}
-        />
-        <NavLink
-          label="Nhận thưởng"
-          component={Link}
-          to="/reward"
-          active={location.pathname === "/reward"}
-        />
+        <Divider opacity={0.08} my="xs" />
+
+        {/* NAV ITEMS */}
+        <div style={{ marginTop: "10px" }}>
+          <AnimatedNav
+            label="Trang chủ"
+            to="/"
+            active={location.pathname === "/"}
+          />
+          <AnimatedNav
+            label="Game"
+            to="/game"
+            active={location.pathname === "/game"}
+          />
+          <AnimatedNav
+            label="Nhận thưởng"
+            to="/reward"
+            active={location.pathname === "/reward"}
+          />
+        </div>
       </AppShell.Navbar>
 
-      {/* CONTENT */}
+      {/* PAGE CONTENT */}
       <AppShell.Main>
-        <Outlet />
+        <motion.div
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35 }}
+        >
+          <Outlet />
+        </motion.div>
       </AppShell.Main>
     </AppShell>
+  );
+}
+
+/* ================================
+   🌟 Animated NavLink
+================================ */
+function AnimatedNav({ label, to, active }) {
+  return (
+    <motion.div whileHover={{ x: 6 }} transition={{ duration: 0.18 }}>
+      <NavLink
+        label={label}
+        component={Link}
+        to={to}
+        active={active}
+        styles={{
+          root: {
+            padding: "9px 12px",
+            borderRadius: "10px",
+            color: active ? "#A259FF" : "#fff",
+            background: active
+              ? "linear-gradient(90deg,#A259FF33,#00E5FF33)"
+              : "transparent",
+            transition: "0.25s",
+            marginBottom: "6px",
+          },
+        }}
+      />
+    </motion.div>
   );
 }
