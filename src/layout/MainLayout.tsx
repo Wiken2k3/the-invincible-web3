@@ -3,53 +3,36 @@ import {
   Burger,
   Button,
   Group,
-  Text,
   Image,
   NavLink,
   Divider,
+  Box,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { Link, Outlet, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import logoImg from "../assets/logo.png";
 
-/* ================================
-   🎨 UI CONSTANTS
-================================ */
-const headerStyle = {
-  backdropFilter: "blur(15px)",
-  background: "rgba(18, 18, 30, 0.55)",
-  borderBottom: "1px solid rgba(255,255,255,0.08)",
+/* =========================
+   🎨 THEME CONFIG (Sui-like)
+========================= */
+const UI = {
+  gradient: "linear-gradient(135deg,#A259FF,#00E5FF)",
+  glass: "rgba(255,255,255,0.04)",
+  border: "1px solid rgba(255,255,255,0.08)",
+  blur: "blur(18px)",
 };
 
-const navbarStyle = {
-  backdropFilter: "blur(20px)",
-  background: "rgba(20, 20, 30, 0.18)",
-  borderRight: "1px solid rgba(255,255,255,0.05)",
-  paddingTop: "14px",
-};
-
-const gradientText = {
-  background: "linear-gradient(90deg,#A259FF,#00E5FF,#A259FF)",
-  WebkitBackgroundClip: "text",
-  color: "transparent",
-};
-
-const walletBtnShadow = {
-  base: "0 0 12px rgba(0, 229, 255, 0.45)",
-  hover: "0 0 18px rgba(0, 229, 255, 0.85)",
-};
-
-/* ================================
-   🔥 LAYOUT
-================================ */
+/* =========================
+   🔥 MAIN LAYOUT
+========================= */
 export default function MainLayout() {
   const [opened, { toggle }] = useDisclosure();
-  const location = useLocation();
+  const { pathname } = useLocation();
 
   return (
     <AppShell
-      header={{ height: 70 }}
+      header={{ height: 68 }}
       navbar={{
         width: 240,
         breakpoint: "sm",
@@ -59,88 +42,63 @@ export default function MainLayout() {
       styles={{
         main: {
           background:
-            "radial-gradient(circle at top, #1A122E 0%, #09080F 80%)",
-          color: "#fff",
+            "radial-gradient(circle at top,#1a1230 0%,#09080f 80%)",
         },
       }}
     >
-      {/* HEADER */}
-      <AppShell.Header style={headerStyle}>
-        <Group justify="space-between" px="md" h="100%">
-          <Group>
+      {/* ================= HEADER ================= */}
+      <AppShell.Header
+        style={{
+          backdropFilter: UI.blur,
+          background: "rgba(18,18,30,0.6)",
+          borderBottom: UI.border,
+        }}
+      >
+        <Group h="100%" px="md" justify="space-between">
+          <Group gap="sm">
             <Burger opened={opened} onClick={toggle} hiddenFrom="sm" size="sm" />
 
-            {/* LOGO + TEXT */}
-            <Group gap="xs" style={{ alignItems: "center" }}>
-              <Image
-                src={logoImg}
-                height={42}
-                width={42}
-                radius="md"
-                style={{ objectFit: "contain" }}
-              />
-
-              {/* <Text fw={800} size="lg" style={gradientText}>
-                THE INVINCIBLE
-              </Text> */}
+            <Group gap={8}>
+              <Image src={logoImg} w={38} h={38} />
             </Group>
           </Group>
 
-          {/* CONNECT WALLET */}
+          {/* Wallet button (mock) */}
           <Button
-            size="sm"
             radius="md"
+            size="sm"
             style={{
-              background: "linear-gradient(135deg,#A259FF,#00E5FF)",
-              boxShadow: walletBtnShadow.base,
-              transition: "0.25s ease",
+              background: UI.gradient,
+              boxShadow: "0 0 16px rgba(0,229,255,0.5)",
             }}
-            onMouseEnter={(e) =>
-              (e.currentTarget.style.boxShadow = walletBtnShadow.hover)
-            }
-            onMouseLeave={(e) =>
-              (e.currentTarget.style.boxShadow = walletBtnShadow.base)
-            }
           >
             Connect Wallet
           </Button>
         </Group>
       </AppShell.Header>
 
-      {/* SIDEBAR */}
-      <AppShell.Navbar style={navbarStyle}>
-        {/* <Text fw={700} size="lg" mb="xs" style={{ opacity: 0.85 }}>
-          Navigation
-        </Text> */}
+      {/* ================= SIDEBAR ================= */}
+      <AppShell.Navbar
+        p="md"
+        style={{
+          backdropFilter: UI.blur,
+          background: "rgba(20,20,35,0.25)",
+          borderRight: UI.border,
+        }}
+      >
+        <Divider opacity={0.06} mb="sm" />
 
-        <Divider opacity={0.08} my="xs" />
-
-        {/* NAV ITEMS */}
-        <div style={{ marginTop: "10px" }}>
-          <AnimatedNav
-            label="Trang chủ"
-            to="/"
-            active={location.pathname === "/"}
-          />
-          <AnimatedNav
-            label="Game"
-            to="/game"
-            active={location.pathname === "/game"}
-          />
-          <AnimatedNav
-            label="Nhận thưởng"
-            to="/reward"
-            active={location.pathname === "/reward"}
-          />
-        </div>
+        <NavItem label="Trang chủ" to="/" active={pathname === "/"} />
+        <NavItem label="Game" to="/game" active={pathname === "/game"} />
+        <NavItem label="Nhận thưởng" to="/reward" active={pathname === "/reward"} />
       </AppShell.Navbar>
 
-      {/* PAGE CONTENT */}
+      {/* ================= CONTENT ================= */}
       <AppShell.Main>
         <motion.div
-          initial={{ opacity: 0, y: 15 }}
+          initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.35 }}
+          transition={{ duration: 0.3 }}
         >
           <Outlet />
         </motion.div>
@@ -149,27 +107,28 @@ export default function MainLayout() {
   );
 }
 
-/* ================================
-   🌟 Animated NavLink
-================================ */
-function AnimatedNav({ label, to, active }) {
+/* =========================
+   🌟 NAV ITEM
+========================= */
+function NavItem({ label, to, active }) {
   return (
-    <motion.div whileHover={{ x: 6 }} transition={{ duration: 0.18 }}>
+    <motion.div whileHover={{ x: 6 }}>
       <NavLink
-        label={label}
         component={Link}
         to={to}
+        label={label}
         active={active}
         styles={{
           root: {
-            padding: "9px 12px",
-            borderRadius: "10px",
+            borderRadius: 10,
+            marginBottom: 6,
+            padding: "10px 14px",
+            fontWeight: 500,
             color: active ? "#A259FF" : "#fff",
             background: active
-              ? "linear-gradient(90deg,#A259FF33,#00E5FF33)"
+              ? "linear-gradient(90deg,#A259FF22,#00E5FF22)"
               : "transparent",
             transition: "0.25s",
-            marginBottom: "6px",
           },
         }}
       />

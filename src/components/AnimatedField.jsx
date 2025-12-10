@@ -1,12 +1,13 @@
-import React, { useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 
 /**
- * AnimatedField
- * - containerRef: React ref tới element chứa grid plots (position: relative)
- * - plots: array of plot objects (used to detect ready plots)
- *
- * Canvas overlays the container; pointerEvents set to none so underlying clicks vẫn hoạt động.
+ * AnimatedField (Web3 / Sui style)
+ * - Overlay canvas cho farm grid
+ * - Glow + particle nhẹ khi plot sẵn sàng
+ * - pointerEvents: none (không ảnh hưởng UI)
  */
+
+const dpr = window.devicePixelRatio || 1;
 
 export default function AnimatedField({ containerRef, plots }) {
   const canvasRef = useRef(null);
@@ -15,134 +16,129 @@ export default function AnimatedField({ containerRef, plots }) {
   const lastTime = useRef(0);
   const spawnAcc = useRef(0);
 
+  /* =========================
+     🔧 CANVAS SETUP
+  ========================= */
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
+    const container = containerRef.current;
+    if (!canvas || !container) return;
+
     const ctx = canvas.getContext("2d", { alpha: true });
 
-    function resize() {
-      const container = containerRef.current;
-      if (!container) return;
-      const rect = container.getBoundingClientRect();
-      canvas.width = Math.floor(rect.width * devicePixelRatio);
-      canvas.height = Math.floor(rect.height * devicePixelRatio);
-      canvas.style.width = `${rect.width}px`;
-      canvas.style.height = `${rect.height}px`;
-      ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
-    }
+    const resize = () => {
+      const r = container.getBoundingClientRect();
+      canvas.width = r.width * dpr;
+      canvas.height = r.height * dpr;
+      canvas.style.width = `${r.width}px`;
+      canvas.style.height = `${r.height}px`;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    };
 
     resize();
     window.addEventListener("resize", resize);
 
-    // helper: create particle
-    function createParticle(x, y, color, size = 1.5, life = 1500) {
+    /* =========================
+       ✨ PARTICLE HELPERS
+    ========================= */
+    const spawn = (x, y, color, size = 2, life = 1200) => {
       particles.current.push({
         x,
         y,
-        vx: (Math.random() - 0.5) * 0.3,
-        vy: -Math.random() * 0.4 - 0.05,
-        size: size + Math.random() * 1.5,
+        vx: (Math.random() - 0.5) * 0.4,
+        vy: -0.4 - Math.random() * 0.3,
+        size,
         life,
         born: performance.now(),
         color,
       });
-    }
+    };
 
-    // create background gentle particles
-    function spawnBackground(dt, w, h) {
+    const spawnBackground = (dt, w, h) => {
       spawnAcc.current += dt;
-      // spawn rate scaled by area
-      const rate = Math.max(0.8, (w * h) / 80000); // tuned
-      const toSpawn = Math.floor(spawnAcc.current * rate * 0.02);
-      if (toSpawn > 0) spawnAcc.current = 0;
-      for (let i = 0; i < toSpawn; i++) {
-        const x = Math.random() * w;
-        const y = h + 10;
-        const color = `rgba(160, 90, 255, ${0.08 + Math.random() * 0.12})`;
-        createParticle(x, y, color, 1 + Math.random() * 2, 4000 + Math.random() * 3000);
-      }
-    }
+      if (spawnAcc.current < 200) return;
+      spawnAcc.current = 0;
 
-    // sparkles on ready plots: compute plot centers from DOM children with [data-plot-index]
-    function spawnSparklesOnReady() {
-      const container = containerRef.current;
-      if (!container) return;
+      spawn(
+        Math.random() * w,
+        h + 12,
+        "rgba(162,89,255,0.12)",
+        1.5,
+        5000
+      );
+    };
+
+    const spawnReadyGlow = () => {
       const nodes = container.querySelectorAll("[data-plot-index]");
       nodes.forEach((el) => {
-        const idx = Number(el.getAttribute("data-plot-index"));
-        if (Number.isNaN(idx)) return;
-        const plot = plots[idx];
-        if (plot && Date.now() >= plot.readyAt) {
-          // spawn a few sparkles near the center of this element
-          const rect = el.getBoundingClientRect();
-          const contRect = container.getBoundingClientRect();
-          const cx = rect.left - contRect.left + rect.width / 2;
-          const cy = rect.top - contRect.top + rect.height / 3;
-          const count = 3 + Math.floor(Math.random() * 3);
-          for (let i = 0; i < count; i++) {
-            const color = i % 2 ? "rgba(0,229,255,0.9)" : "rgba(162,89,255,0.95)";
-            createParticle(cx + (Math.random() - 0.5) * rect.width * 0.4, cy + (Math.random() - 0.5) * rect.height * 0.2, color, 2 + Math.random() * 2, 800 + Math.random() * 800);
-          }
+        const i = Number(el.dataset.plotIndex);
+        const plot = plots[i];
+        if (!plot || Date.now() < plot.readyAt) return;
+
+        const r = el.getBoundingClientRect();
+        const c = container.getBoundingClientRect();
+        const cx = r.left - c.left + r.width / 2;
+        const cy = r.top - c.top + r.height / 3;
+
+        for (let j = 0; j < 3; j++) {
+          spawn(
+            cx + (Math.random() - 0.5) * r.width * 0.4,
+            cy,
+            j % 2
+              ? "rgba(0,229,255,0.9)"
+              : "rgba(162,89,255,0.9)",
+            2 + Math.random() * 2,
+            800
+          );
         }
       });
-    }
+    };
 
-    function render(t) {
-      if (!lastTime.current) lastTime.current = t;
-      const dt = t - lastTime.current;
+    /* =========================
+       🎥 RENDER LOOP
+    ========================= */
+    const render = (t) => {
+      const dt = t - (lastTime.current || t);
       lastTime.current = t;
 
-      const w = canvas.width / devicePixelRatio;
-      const h = canvas.height / devicePixelRatio;
+      const w = canvas.width / dpr;
+      const h = canvas.height / dpr;
 
-      // fade background slightly
       ctx.clearRect(0, 0, w, h);
 
-      // background gradient overlay (subtle)
+      // subtle dark overlay
       const g = ctx.createLinearGradient(0, 0, w, h);
-      g.addColorStop(0, "rgba(10,8,20,0.6)");
-      g.addColorStop(1, "rgba(5,6,12,0.5)");
+      g.addColorStop(0, "rgba(12,10,24,0.6)");
+      g.addColorStop(1, "rgba(6,8,16,0.5)");
       ctx.fillStyle = g;
       ctx.fillRect(0, 0, w, h);
 
-      // spawn background particles
       spawnBackground(dt, w, h);
+      if (Math.random() < 0.06) spawnReadyGlow();
 
-      // occasionally spawn sparkles on ready plots
-      if (Math.random() < 0.08) spawnSparklesOnReady();
-
-      // update particles
       const now = performance.now();
-      for (let i = particles.current.length - 1; i >= 0; i--) {
-        const p = particles.current[i];
-        const age = now - p.born;
-        const lifeRatio = 1 - age / p.life;
-        if (lifeRatio <= 0) {
-          particles.current.splice(i, 1);
-          continue;
-        }
-        // physics
-        p.x += p.vx * (dt * 0.06);
-        p.y += p.vy * (dt * 0.06);
-        p.vy += 0.0005 * (dt * 0.06); // gravity small
+      particles.current = particles.current.filter((p) => {
+        const life = 1 - (now - p.born) / p.life;
+        if (life <= 0) return false;
 
-        // draw
+        p.x += p.vx * dt * 0.06;
+        p.y += p.vy * dt * 0.06;
+        p.vy += 0.0006 * dt;
+
         ctx.beginPath();
-        const alpha = Math.max(0, Math.min(1, lifeRatio));
-        ctx.fillStyle = p.color.replace(/[\d\.]+\)$/g, `${alpha})`) || `rgba(255,255,255,${alpha})`;
-        // glow effect
-        ctx.shadowBlur = 8 * lifeRatio;
-        ctx.shadowColor = p.color;
         ctx.globalCompositeOperation = "lighter";
-        ctx.arc(p.x, p.y, p.size * (0.6 + lifeRatio * 0.8), 0, Math.PI * 2);
+        ctx.shadowBlur = 12 * life;
+        ctx.shadowColor = p.color;
+        ctx.fillStyle = p.color.replace(/[\d.]+\)$/g, `${life})`);
+        ctx.arc(p.x, p.y, p.size * (0.7 + life), 0, Math.PI * 2);
         ctx.fill();
         ctx.closePath();
-        ctx.shadowBlur = 0;
         ctx.globalCompositeOperation = "source-over";
-      }
+        return true;
+      });
 
       rafRef.current = requestAnimationFrame(render);
-    }
+    };
 
     rafRef.current = requestAnimationFrame(render);
 
@@ -152,16 +148,15 @@ export default function AnimatedField({ containerRef, plots }) {
     };
   }, [containerRef, plots]);
 
-  // render canvas absolutely positioned within container
+  /* =========================
+     🎨 CANVAS LAYER
+  ========================= */
   return (
     <canvas
       ref={canvasRef}
       style={{
         position: "absolute",
-        left: 0,
-        top: 0,
-        width: "100%",
-        height: "100%",
+        inset: 0,
         pointerEvents: "none",
         zIndex: 0,
         mixBlendMode: "screen",

@@ -1,4 +1,9 @@
+// =========================
+//  GAMEPAGE V7 (FINAL FIX)
+// =========================
+
 "use client";
+
 import React, { useEffect, useMemo, useState, useCallback } from "react";
 import {
   Title,
@@ -21,11 +26,9 @@ import {
 import { showNotification } from "@mantine/notifications";
 import { motion, AnimatePresence } from "framer-motion";
 
-// Giả định các import này là đúng đường dẫn của bạn
-// Hãy đảm bảo các file ảnh/component FarmTile tồn tại
 import FarmTile from "../components/FarmTile";
 
-// Seed Images
+// Seeds
 import commonImg from "../assets/seeds/common.png";
 import rareImg from "../assets/seeds/rare.png";
 import epicImg from "../assets/seeds/epic.png";
@@ -33,7 +36,7 @@ import legendaryImg from "../assets/seeds/legendary.png";
 
 /* -------------------------------- EFFECT CONFIG ------------------------------ */
 const EFFECT_QUALITY = [
-  { id: "normal", label: "Thường", weight: 40, bonus: 0, color: "gray", icon: "🌱" },
+  { id: "normal", label: "Thường", weight: 40, bonus: 0, color: "#888", icon: "🌱" },
   { id: "bronze", label: "Đồng", weight: 30, bonus: 5, color: "#cd7f32", icon: "🥉" },
   { id: "silver", label: "Bạc", weight: 20, bonus: 10, color: "#c0c0c0", icon: "🥈" },
   { id: "gold", label: "Vàng", weight: 8, bonus: 30, color: "#ffd700", icon: "🥇" },
@@ -50,7 +53,7 @@ function pickEffectQuality() {
   return EFFECT_QUALITY[0];
 }
 
-/* ----------------------------- GAME CONFIG ----------------------------- */
+/* -------------------------------- GAME DATA ------------------------------ */
 const SEED_DEFINITIONS = {
   common: { id: "common", name: "Hạt bình thường", price: 10, growSec: 15, rarity: "Common", airdrop: 1, color: "green", img: commonImg, emoji: "🌱" },
   rare: { id: "rare", name: "Hạt hiếm", price: 35, growSec: 30, rarity: "Rare", airdrop: 3, color: "lime", img: rareImg, emoji: "🌿" },
@@ -58,15 +61,11 @@ const SEED_DEFINITIONS = {
   legendary: { id: "legendary", name: "Hạt truyền thuyết", price: 400, growSec: 180, rarity: "Legendary", airdrop: 25, color: "yellow", img: legendaryImg, emoji: "🌸" },
 };
 
-const MYSTERY_BOX = {
-  price: 50,
-  minCoinToOpen: 500, // New rule: Need at least 500 coins to access lootboard
-};
-
-const STORAGE_KEY = "farm_game_v6_web3_ui_clean";
+const MYSTERY_BOX = { price: 50, minCoinToOpen: 500 };
+const STORAGE_KEY = "farm_game_v7_fixed";
 const NUM_PLOTS = 9;
 
-/* ----------------------- LOAD / SAVE STATE ------------------------ */
+/* -------------------------------- LOAD / SAVE ------------------------------ */
 function loadState() {
   if (typeof window === "undefined") return null;
   try {
@@ -80,68 +79,51 @@ function saveState(state) {
   if (typeof window === "undefined") return;
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    // Tự động thông báo Auto-save
-    // showNotification({ color: "gray", title: "💾 Auto-save", message: "Trạng thái trò chơi đã được lưu.", autoClose: 3000 });
   } catch {}
 }
 
-/* ----------------------- UTILS ------------------------ */
-// Hàm tạo số nguyên ngẫu nhiên duy nhất
+/* -------------------------------- UTILS ------------------------------ */
 function uniqueRandomInts(count, min, max) {
   const set = new Set();
   const range = max - min + 1;
-  if (count > range) count = range;
-  while (set.size < count) {
-    const v = Math.floor(Math.random() * range) + min;
-    set.add(v);
+  while (set.size < count && set.size < range) {
+    set.add(Math.floor(Math.random() * range) + min);
   }
-  return Array.from(set);
+  return [...set];
 }
 
-/* ----------------------- UI COMPONENTS (Mockup for Glassmorphism/Gradient) ------------------------ */
+/* -------------------------------- STYLES ------------------------------ */
 const glassCardStyle = {
-  background: "rgba(255, 255, 255, 0.05)",
+  background: "rgba(255,255,255,0.05)",
   backdropFilter: "blur(8px)",
-  border: "1px solid rgba(255, 255, 255, 0.1)",
-  boxShadow: "0 4px 30px rgba(0, 0, 0, 0.1)",
+  border: "1px solid rgba(255,255,255,0.12)",
 };
 
 const gradientButtonStyle = {
   background: "linear-gradient(90deg, #A259FF, #00E5FF)",
-  transition: "all 0.3s ease",
-  "&:hover": {
-    background: "linear-gradient(90deg, #8a4be6, #00c7e0)",
-    transform: "scale(1.03)",
-  },
+  transition: "0.2s",
 };
 
-const FarmPlotCard = ({ children }) => (
-  <Card radius="lg" padding="lg" style={glassCardStyle}>
-    {children}
-  </Card>
-);
-
-const SectionCard = ({ children }) => (
-  <Card radius="lg" p="lg" style={{ ...glassCardStyle, background: "rgba(255, 255, 255, 0.03)" }}>
-    {children}
-  </Card>
-);
+const FarmPlotCard = ({ children }) => <Card radius="lg" p="lg" style={glassCardStyle}>{children}</Card>;
+const SectionCard = ({ children }) => <Card radius="lg" p="lg" style={glassCardStyle}>{children}</Card>;
 
 const HeroBox = ({ children }) => (
   <Box
     style={{
       background:
-        "radial-gradient(circle at 20% 10%, rgba(162,89,255,0.1), transparent 30%), radial-gradient(circle at 80% 90%, rgba(0,229,255,0.08), transparent 30%), linear-gradient(180deg,#08060a,#0e0b14)",
-      padding: "36px 0",
+        "radial-gradient(circle at 20% 10%, rgba(162,89,255,0.12), transparent 35%), radial-gradient(circle at 80% 90%, rgba(0,229,255,0.12), transparent 40%), linear-gradient(180deg,#0a0812,#111827)",
+      padding: "32px 0",
       borderRadius: 12,
-      marginBottom: 18,
+      marginBottom: 20,
     }}
   >
     {children}
   </Box>
 );
 
-/* ====================================== MAIN GAME ===================================================== */
+/* ============================================================================================
+    MAIN GAME
+============================================================================================ */
 export default function GamePage() {
   const persisted = useMemo(() => loadState(), []);
   const [coins, setCoins] = useState(persisted?.coins ?? 100);
@@ -151,416 +133,313 @@ export default function GamePage() {
 
   const [selectedSeed, setSelectedSeed] = useState("common");
 
-  // Plant modal
   const [selectPlantModal, setSelectPlantModal] = useState(false);
   const [activePlotIndex, setActivePlotIndex] = useState(null);
 
-  // Lootboard
   const [isLootboardOpen, setLootboardOpen] = useState(false);
-  const [lootBoxes, setLootBoxes] = useState([]); // {id, points, opened, locked}
+  const [lootBoxes, setLootBoxes] = useState([]);
 
-  // Effects Popups
   const [effectPopup, setEffectPopup] = useState(null);
   const [harvestAllPopup, setHarvestAllPopup] = useState(null);
 
-  /* Rerender progress bars & Auto-save */
+  /* -------------------------------- AUTO UPDATE PROGRESS ------------------------------ */
   useEffect(() => {
-    // Rerender progress bars mỗi giây
     const t = setInterval(() => setPlots((p) => [...p]), 1000);
     return () => clearInterval(t);
   }, []);
 
   useEffect(() => {
-    // Auto-save: Tránh lưu quá thường xuyên. Thêm debounce/throttle nếu cần cho ứng dụng lớn hơn.
     saveState({ coins, airdropPoints, inventory, plots });
   }, [coins, airdropPoints, inventory, plots]);
 
-  /* ------------------------ BUY SEED ------------------------- */
+  /* -------------------------------- BUY SEED ------------------------------ */
   const buySeed = useCallback((seedId, amount = 1) => {
     const sd = SEED_DEFINITIONS[seedId];
     if (!sd) return;
 
     const cost = sd.price * amount;
-
-    if (coins < cost) {
-      return showNotification({ color: "red", title: "🚫 Không đủ tiền", message: `Bạn cần ${cost} Coins.`, autoClose: 3000 });
-    }
+    if (coins < cost)
+      return showNotification({ color: "red", title: "Không đủ Coins", message: `Cần ${cost} Coins` });
 
     setCoins((c) => c - cost);
     setInventory((inv) => ({ ...inv, [seedId]: (inv[seedId] || 0) + amount }));
 
-    showNotification({ color: "green", title: "✅ Mua thành công", message: `Bạn đã mua ${amount} ${sd.name}.`, autoClose: 3000 });
+    showNotification({ color: "green", title: "Mua thành công!", message: `Đã mua ${amount} ${sd.name}` });
   }, [coins]);
 
-  /* ------------------------ PLANT ------------------------- */
-  const openSelectPlantModal = useCallback((plotIndex) => {
-    setActivePlotIndex(plotIndex);
+  /* -------------------------------- PLANT ------------------------------ */
+  const openSelectPlantModal = useCallback((i) => {
+    setActivePlotIndex(i);
     setSelectPlantModal(true);
   }, []);
 
   const confirmPlant = useCallback((seedId) => {
-    const i = activePlotIndex;
-    if (i === null) return;
-
-    if ((inventory[seedId] || 0) <= 0) {
-      showNotification({ color: "orange", title: "🚫 Không còn hạt", message: "Bạn không có hạt này.", autoClose: 3000 });
-      return;
-    }
+    if (activePlotIndex === null) return;
+    if ((inventory[seedId] ?? 0) <= 0)
+      return showNotification({ color: "orange", title: "Không đủ hạt giống" });
 
     setPlots((prev) => {
-      if (prev[i]) {
-        showNotification({ color: "yellow", title: "🚫 Ô đã có cây", autoClose: 3000 });
-        return prev;
-      }
+      if (prev[activePlotIndex]) return prev;
 
       const sd = SEED_DEFINITIONS[seedId];
       const now = Date.now();
-      const copy = prev.slice();
-      copy[i] = { seedId, plantedAt: now, readyAt: now + sd.growSec * 1000 };
-      return copy;
+      const clone = [...prev];
+      clone[activePlotIndex] = {
+        seedId,
+        plantedAt: now,
+        readyAt: now + sd.growSec * 1000,
+      };
+      return clone;
     });
 
-    setInventory((inv) => ({ ...inv, [seedId]: (inv[seedId] || 0) - 1 }));
+    setInventory((inv) => ({ ...inv, [seedId]: inv[seedId] - 1 }));
     setSelectPlantModal(false);
-    setActivePlotIndex(null);
 
-    showNotification({ color: "blue", title: "🌱 Đã trồng", message: `Bạn đã trồng ${SEED_DEFINITIONS[seedId].name}`, autoClose: 3000 });
+    showNotification({ color: "blue", title: "Đã trồng!", message: "Hãy chờ cây lớn." });
   }, [activePlotIndex, inventory]);
 
-  /* ------------------------ HARVEST ------------------------- */
+  /* -------------------------------- HARVEST ------------------------------ */
   const harvest = useCallback((i) => {
     setPlots((prev) => {
       const p = prev[i];
       if (!p) return prev;
 
       const now = Date.now();
-      if (now < p.readyAt) {
-        showNotification({ color: "yellow", title: "⚠️ Cây chưa chín", autoClose: 3000 });
-        return prev;
-      }
+      if (now < p.readyAt)
+        return showNotification({ color: "yellow", title: "Cây chưa chín" });
 
       const sd = SEED_DEFINITIONS[p.seedId];
       const baseReward = Math.round(sd.price * (0.6 + Math.random() * 0.8));
-      const quality = pickEffectQuality();
-      const bonus = quality.bonus;
-      const totalAP = sd.airdrop + bonus;
+
+      const q = pickEffectQuality();
+      const totalAP = sd.airdrop + q.bonus;
 
       setCoins((c) => c + baseReward);
       setAirdropPoints((a) => a + totalAP);
 
-      // Thêm Particle System (Giả lập bằng popup mượt mà)
-      setEffectPopup({ seed: sd, base: sd.airdrop, quality, coins: baseReward, bonus: bonus, totalAP });
+      setEffectPopup({
+        seed: sd,
+        coins: baseReward,
+        bonus: q.bonus,
+        totalAP,
+        quality: q,
+      });
       setTimeout(() => setEffectPopup(null), 1400);
-
-      showNotification({ color: "green", title: "💰 Thu hoạch thành công!", message: `Nhận +${baseReward} Coins & +${totalAP} AP.`, autoClose: 3000 });
 
       return prev.map((x, idx) => (idx === i ? null : x));
     });
   }, []);
 
-  /* ------------------------ HARVEST ALL ------------------------- */
+  /* -------------------------------- HARVEST ALL ------------------------------ */
   const harvestAll = useCallback(() => {
+    const now = Date.now();
     let totalCoins = 0;
     let totalAP = 0;
     const details = [];
-    const now = Date.now();
 
     setPlots((prev) => {
-      const harvestedIndices = [];
-      const newPlots = prev.map((p, i) => {
+      const updated = prev.map((p) => {
         if (!p || now < p.readyAt) return p;
 
         const sd = SEED_DEFINITIONS[p.seedId];
         const baseReward = Math.round(sd.price * (0.6 + Math.random() * 0.8));
+
         const q = pickEffectQuality();
-        const totalAirdrop = sd.airdrop + q.bonus;
+        const ap = sd.airdrop + q.bonus;
 
         totalCoins += baseReward;
-        totalAP += totalAirdrop;
+        totalAP += ap;
+        details.push({ name: sd.name, emoji: sd.emoji, bonus: q.bonus, quality: q.label });
 
-        details.push({ name: sd.name, quality: q.label, bonus: q.bonus, emoji: sd.emoji });
-        harvestedIndices.push(i);
-        return null; // Harvested
+        return null;
       });
 
-      if (details.length > 0) {
-        setCoins((c) => c + totalCoins);
-        setAirdropPoints((a) => a + totalAP);
-
-        // Thêm Harvest All Popup
-        setHarvestAllPopup({ coins: totalCoins, ap: totalAP, list: details });
-        setTimeout(() => setHarvestAllPopup(null), 2500);
-
-        showNotification({ color: "green", title: `🌾 Thu hoạch tất cả!`, message: `Tổng cộng +${totalCoins} Coins & +${totalAP} AP.`, autoClose: 3000 });
-      } else {
-        showNotification({ color: "orange", title: "⚠️ Không có cây nào sẵn sàng", message: "Hãy đợi cây chín.", autoClose: 3000 });
-      }
-
-      return newPlots;
-    });
-  }, []);
-
-  /* ------------------------ LOOTBOARD ------------------------- */
-  const openLootboard = useCallback(() => {
-    // Rule 1: Need at least 500 coins to buy Mystery Box
-    if (coins < MYSTERY_BOX.minCoinToOpen) {
-      return showNotification({
-        color: "red",
-        title: "🚫 Không đủ Coins để mở Lootboard",
-        message: `Bạn cần tối thiểu ${MYSTERY_BOX.minCoinToOpen} Coins.`,
-        autoClose: 3000
-      });
-    }
-
-    // Cost per open = 50 coins
-    if (coins < MYSTERY_BOX.price) {
-      return showNotification({
-        color: "red",
-        title: "🚫 Không đủ Coins",
-        message: `Bạn cần ${MYSTERY_BOX.price} Coins để mở Mystery Box.`,
-        autoClose: 3000
-      });
-    }
-
-    // Deduct cost
-    setCoins((c) => c - MYSTERY_BOX.price);
-
-    // Generate 10 boxes (but user can open ONLY ONE)
-    const points = uniqueRandomInts(10, 10, 100);
-    const boxes = points.map((pt, idx) => ({
-      id: idx,
-      points: pt,
-      opened: false,
-      locked: false,
-    }));
-
-    setLootBoxes(boxes);
-    setLootboardOpen(true);
-  }, [coins]);
-
-  /* ------------------------ OPEN BOX (Only 1 allowed) ------------------------- */
-  const openBox = useCallback((idx) => {
-    setLootBoxes((prev) => {
-      const alreadyOpened = prev.some((b) => b.opened === true);
-
-      if (alreadyOpened) {
-        showNotification({
-          color: "yellow",
-          title: "Bạn chỉ được mở 1 hộp",
-          message: "Các hộp khác đã bị khoá.",
-          autoClose: 3000
-        });
+      if (details.length === 0) {
+        showNotification({ color: "orange", title: "Không có cây chín." });
         return prev;
       }
 
-      const copy = prev.slice();
-      const box = copy[idx];
+      setCoins((c) => c + totalCoins);
+      setAirdropPoints((a) => a + totalAP);
 
-      if (!box || box.opened) return prev;
+      setHarvestAllPopup({ coins: totalCoins, ap: totalAP, list: details });
+      setTimeout(() => setHarvestAllPopup(null), 2600);
 
-      copy[idx] = { ...box, opened: true };
+      return updated;
+    });
+  }, []);
 
-      // Lock all other boxes
-      for (let i = 0; i < copy.length; i++) {
-        if (i !== idx) {
-          copy[i].locked = true;
-        }
-      }
+  /* -------------------------------- LOOTBOARD ------------------------------ */
+  const openLootboard = useCallback(() => {
+    if (coins < MYSTERY_BOX.minCoinToOpen)
+      return showNotification({ color: "red", title: "Cần 500 Coins để mở!" });
 
-      setAirdropPoints((a) => a + box.points);
+    if (coins < MYSTERY_BOX.price) return showNotification({ color: "red", title: "Không đủ Coins!" });
 
-      showNotification({
-        color: "grape",
-        title: `🎉 Nhận ${box.points} Airdrop Points`,
-        message: "Bạn đã mở Mystery Box!",
-        autoClose: 3000
-      });
+    setCoins((c) => c - MYSTERY_BOX.price);
+
+    const points = uniqueRandomInts(10, 10, 100);
+    setLootBoxes(points.map((pt, i) => ({ id: i, points: pt, opened: false, locked: false })));
+
+    setLootboardOpen(true);
+  }, [coins]);
+
+  const openBox = useCallback((idx) => {
+    setLootBoxes((prev) => {
+      const opened = prev.some((b) => b.opened);
+      if (opened) return prev;
+
+      const copy = [...prev];
+      copy[idx] = { ...copy[idx], opened: true };
+
+      for (let i = 0; i < copy.length; i++) if (i !== idx) copy[i].locked = true;
+
+      setAirdropPoints((a) => a + copy[idx].points);
+
+      showNotification({ color: "grape", title: `+${copy[idx].points} AP!` });
 
       return copy;
     });
   }, []);
 
-  /* ------------------------ RESET ------------------------- */
-  const resetGame = useCallback(() => {
-    if (!window.confirm("Bạn có chắc chắn muốn RESET TOÀN BỘ game không?")) return;
-    setCoins(100);
-    setAirdropPoints(0);
-    setInventory({ common: 2, rare: 0, epic: 0, legendary: 0 });
-    setPlots(Array(NUM_PLOTS).fill(null));
-    setSelectPlantModal(false);
-    setActivePlotIndex(null);
-    setLootboardOpen(false);
-    setLootBoxes([]);
-    localStorage.removeItem(STORAGE_KEY);
-    showNotification({ color: "red", title: "Game đã reset", message: "Chơi lại từ đầu.", autoClose: 3000 });
-  }, []);
-
-  /* ------------------------ HELPERS ------------------------- */
-  const plotProgress = useCallback((p) => {
+  /* -------------------------------- PROGRESS ------------------------------ */
+  const plotProgress = (p) => {
     if (!p) return 0;
     const sd = SEED_DEFINITIONS[p.seedId];
     const total = sd.growSec * 1000;
     const elapsed = Date.now() - p.plantedAt;
-    return Math.min(100, Math.round((elapsed / total) * 100));
-  }, []);
+    return Math.min(100, Math.floor((elapsed / total) * 100));
+  };
 
-  /* ------------------------ RENDER ------------------------- */
-
+  /* ============================================================================================
+      RENDER
+  ============================================================================================ */
   return (
     <Container size="xl" py="lg">
 
-      {/* HERO & STATS - Tích hợp Gradient Background động */}
+      {/* ---------------- HERO ---------------- */}
       <HeroBox>
-        <Group position="apart" align="center" px="md">
-          <Group spacing="xs">
-            <motion.div initial={{ x: -20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ duration: 0.5 }}>
-              <Title order={2} style={{ color: "#fff" }}>🌾 Farming Airdrop Game (2025)</Title>
-              <Text color="dimmed" size="md">— Play • Earn • Claim</Text>
-            </motion.div>
-          </Group>
+        <Group position="apart" px="md">
+          <div>
+            <Title order={2} fw={800} c="white">🌾 Farming Airdrop Game</Title>
+            <Text size="sm" c="gray">Play • Earn • Claim</Text>
+          </div>
 
-          <Group spacing="md">
-            <motion.div whileHover={{ scale: 1.05 }} style={{ cursor: "pointer" }}>
-              <Badge color="yellow" variant="filled" size="xl" radius="md">💰 COINS: {coins}</Badge>
-            </motion.div>
-            <motion.div whileHover={{ scale: 1.05 }} style={{ cursor: "pointer" }}>
-              <Badge color="teal" variant="filled" size="xl" radius="md">✨ AIRDROP: {airdropPoints}</Badge>
-            </motion.div>
+          <Group>
+            <Badge size="lg" color="yellow">💰 {coins}</Badge>
+            <Badge size="lg" color="teal">✨ {airdropPoints}</Badge>
 
-            <Button
-              size="md"
-              radius="xl"
-              style={gradientButtonStyle} // Gradient button with hover effect
-              onClick={openLootboard}
-            >
-              🎁 Mở 1 MYSTERY BOX ({MYSTERY_BOX.price} Coins)
+            <Button radius="xl" style={gradientButtonStyle} onClick={openLootboard}>
+              🎁 Mở Mystery Box
             </Button>
-
-            {/* <Button variant="outline" onClick={resetGame}>Reset</Button> */}
           </Group>
         </Group>
       </HeroBox>
 
-      {/* MAIN CONTENT GRID - Responsive grid layout */}
+      {/* ---------------- MAIN GRID ---------------- */}
       <Grid gutter="xl">
 
-        {/* LEFT FIELD (7/12) */}
+        {/* LEFT FARM */}
         <Grid.Col span={{ base: 12, md: 7 }}>
           <FarmPlotCard>
-            <Group position="apart" mb="md">
-              <Title order={4} style={{ color: "#fff" }}>🪴 Khu đất trồng trọt (9 ô)</Title>
-              <Button size="sm" color="green" onClick={harvestAll}>🌾 Thu hoạch tất cả</Button>
+            <Group position="apart" mb="sm">
+              <Title order={4} c="white">🪴 Khu trồng trọt</Title>
+              <Button color="green" size="sm" onClick={harvestAll}>🌾 Harvest All</Button>
             </Group>
 
-            {/* Farm Grid - Responsive grid layout (Mantine SimpleGrid) */}
-            <SimpleGrid
-              cols={{ base: 2, xs: 3, sm: 3, md: 3 }}
-              spacing="lg"
-            >
+            <SimpleGrid cols={{ base: 2, sm: 3 }} spacing="lg">
               {plots.map((p, i) => {
-                const seedDef = p ? SEED_DEFINITIONS[p.seedId] : null;
+                const def = p ? SEED_DEFINITIONS[p.seedId] : null;
                 const ready = p && Date.now() >= p.readyAt;
                 const progress = plotProgress(p);
 
                 return (
-                  <motion.div
-                    key={i}
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ type: "spring", stiffness: 100 }}
-                  >
+                  <div key={i}>
                     <FarmTile
-                      seed={seedDef ? { id: seedDef.id, image: seedDef.img, name: seedDef.name, emoji: seedDef.emoji } : null}
+                      seed={def ? { id: def.id, image: def.img, name: def.name, emoji: def.emoji } : null}
                       index={i}
-                      onPlant={() => (p ? harvest(i) : openSelectPlantModal(i))}
                       ready={ready}
+                      onPlant={() => p ? harvest(i) : openSelectPlantModal(i)}
                     />
 
-                    <Stack spacing={4} mt={8}>
-                      <Group position="apart">
-                        <Text size="xs" color="dimmed" fw={500}>Ô #{i + 1}</Text>
-                        {p ? (
-                          <Text size="xs" fw={700} color={ready ? "green" : "blue"}>
-                            {ready ? "✅ Sẵn sàng" : `${seedDef.emoji} Đang lớn`}
-                          </Text>
-                        ) : (
-                          <Text size="xs" color="gray">Trống</Text>
-                        )}
-                      </Group>
+                    <Text size="xs" mt={6} c="gray">
+                      {p ? (ready ? "✅ Sẵn sàng" : `${def.emoji} Đang lớn`) : "Trống"}
+                    </Text>
 
-                      {p && (
-                        <Progress
-                          size="lg"
-                          value={progress}
-                          radius="xl"
-                          color={ready ? "teal" : "blue"}
-                          style={{ transition: "width 1s ease-out" }} // Animated Progress bars
-                        />
-                      )}
-                    </Stack>
-                  </motion.div>
+                    {p && (
+                      <Progress
+                        mt={5}
+                        radius="xl"
+                        size="sm"
+                        value={progress}
+                        color={ready ? "teal" : "blue"}
+                      />
+                    )}
+                  </div>
                 );
               })}
             </SimpleGrid>
           </FarmPlotCard>
         </Grid.Col>
 
-        {/* RIGHT SHOP & INVENTORY (5/12) */}
+        {/* RIGHT PANEL */}
         <Grid.Col span={{ base: 12, md: 5 }}>
           <Stack>
 
             {/* SHOP */}
             <SectionCard>
-              <Title order={5} mb="sm">🛒 Cửa hàng hạt giống</Title>
+              <Title order={5} c="white">🛒 Cửa hàng</Title>
 
               <Select
-                label="Chọn loại hạt"
+                label="Chọn hạt"
                 value={selectedSeed}
-                onChange={(v) => setSelectedSeed(v)}
+                onChange={(v) => v && setSelectedSeed(v)}
                 data={Object.values(SEED_DEFINITIONS).map((s) => ({
                   value: s.id,
                   label: `${s.emoji} ${s.name} — ${s.price} Coins`,
                 }))}
-                mb="md"
+                my="md"
               />
 
               <Group>
-                <Button size="sm" style={gradientButtonStyle} onClick={() => buySeed(selectedSeed, 1)}>Mua 1</Button>
-                <Button size="sm" color="green" variant="outline" onClick={() => buySeed(selectedSeed, 5)}>Mua 5</Button>
-                <Button size="sm" color="green" variant="outline" onClick={() => buySeed(selectedSeed, 10)}>Mua 10</Button>
+                <Button style={gradientButtonStyle} onClick={() => buySeed(selectedSeed, 1)}>Mua 1</Button>
+                <Button variant="outline" onClick={() => buySeed(selectedSeed, 5)}>Mua 5</Button>
+                <Button variant="outline" onClick={() => buySeed(selectedSeed, 10)}>Mua 10</Button>
               </Group>
             </SectionCard>
 
             {/* INVENTORY */}
             <SectionCard>
-              <Title order={6}>📦 Túi đồ</Title>
-              <SimpleGrid cols={2} spacing="sm" mt="md">
+              <Title order={6} c="white">📦 Túi đồ</Title>
+
+              <SimpleGrid cols={2} mt="md">
                 {Object.values(SEED_DEFINITIONS).map((sd) => (
                   <Card
                     key={sd.id}
                     p="sm"
-                    radius="md"
-                    withBorder
                     component={motion.div}
-                    whileHover={{ scale: 1.05, rotate: 1 }} // Hover effect: Scale up, rotate
-                    style={{ display: "flex", gap: 10, alignItems: "center", cursor: "pointer" }}
+                    whileHover={{ scale: 1.04 }}
+                    style={{
+                      border: "1px solid rgba(255,255,255,0.15)",
+                      background: "rgba(255,255,255,0.03)",
+                    }}
                   >
-                    <Image src={sd.img} height={44} width={44} alt={sd.name} />
-                    <div style={{ flex: 1 }}>
-                      <Text fw={700}>{sd.emoji} {sd.name}</Text>
-                      <Text size="xs" color="dimmed">Stock: **{inventory[sd.id] || 0}**</Text>
-                    </div>
+                    <Group>
+                      <Image src={sd.img} width={42} />
+                      <div>
+                        <Text fw={700}>{sd.emoji} {sd.name}</Text>
+                        <Text size="xs" c="gray">Stock: {inventory[sd.id] ?? 0}</Text>
+                      </div>
+                    </Group>
+
                     <Button
+                      mt="xs"
                       size="xs"
-                      variant="filled"
-                      disabled={(inventory[sd.id] || 0) <= 0}
+                      disabled={(inventory[sd.id] ?? 0) <= 0}
                       onClick={() => {
-                        // Tự động tìm ô trống gần nhất để trồng
-                        const empty = plots.findIndex((pp) => !pp);
-                        if (empty === -1) {
-                          showNotification({ color: "orange", title: "Hết ô trống", autoClose: 3000 });
-                          return;
-                        }
+                        const empty = plots.findIndex((p) => !p);
+                        if (empty === -1) return showNotification({ color: "orange", title: "Không còn ô trống!" });
+
                         setActivePlotIndex(empty);
                         confirmPlant(sd.id);
                       }}
@@ -575,38 +454,39 @@ export default function GamePage() {
         </Grid.Col>
       </Grid>
 
-      {/* PLANT MODAL - Modal system mượt mà với backdrop blur (Mantine handles blur) */}
+      {/* ---------------- PLANT MODAL ---------------- */}
       <Modal
         opened={selectPlantModal}
         onClose={() => setSelectPlantModal(false)}
         centered
-        title={`Chọn hạt để trồng vào Ô #${activePlotIndex + 1}`}
-        styles={{ modal: { ...glassCardStyle } }}
+        title={`Trồng vào ô #${activePlotIndex !== null ? activePlotIndex + 1 : ""}`}
+        styles={{ modal: glassCardStyle }}
       >
         <SimpleGrid cols={2}>
           {Object.values(SEED_DEFINITIONS).map((sd) => {
-            const cnt = inventory[sd.id] || 0;
+            const stock = inventory[sd.id] ?? 0;
+
             return (
-              <Card key={sd.id} p="sm" radius="md" withBorder>
-                <Group position="apart" align="center">
-                  <Group>
-                    <Image src={sd.img} height={48} width={48} alt={sd.name} />
-                    <div>
-                      <Text fw={700}>{sd.emoji} {sd.name}</Text>
-                      <Text size="xs" color="dimmed">{sd.rarity} • Grow {sd.growSec}s</Text>
-                    </div>
-                  </Group>
-                  <Stack spacing={4} align="flex-end">
-                    <Text size="sm">Stock: {cnt}</Text>
-                    <Button
-                      size="xs"
-                      disabled={cnt <= 0}
-                      onClick={() => confirmPlant(sd.id)}
-                      style={cnt <= 0 ? {} : gradientButtonStyle}
-                    >
-                      Trồng
-                    </Button>
-                  </Stack>
+              <Card key={sd.id} p="sm" radius="md" style={glassCardStyle}>
+                <Group>
+                  <Image src={sd.img} width={48} />
+                  <div>
+                    <Text fw={600}>{sd.emoji} {sd.name}</Text>
+                    <Text size="xs" c="gray">{sd.rarity} — {sd.growSec}s</Text>
+                  </div>
+                </Group>
+
+                <Group position="apart" mt="xs">
+                  <Text size="sm">Stock: {stock}</Text>
+
+                  <Button
+                    size="xs"
+                    disabled={stock <= 0}
+                    style={stock > 0 ? gradientButtonStyle : {}}
+                    onClick={() => confirmPlant(sd.id)}
+                  >
+                    Trồng
+                  </Button>
                 </Group>
               </Card>
             );
@@ -614,142 +494,99 @@ export default function GamePage() {
         </SimpleGrid>
       </Modal>
 
-      {/* LOOTBOARD MODAL (UPDATED LOGIC) */}
+      {/* ---------------- LOOTBOARD ---------------- */}
       <Modal
         opened={isLootboardOpen}
         onClose={() => setLootboardOpen(false)}
-        title="🎁 Mystery Box — Chọn 1 hộp duy nhất"
         size="xl"
         centered
-        styles={{ modal: { ...glassCardStyle } }}
+        title="🎁 Mystery Box — Chọn 1 hộp"
+        styles={{ modal: glassCardStyle }}
       >
-        <Text size="sm" color="dimmed" mb="md">
-          Bạn đã tốn **{MYSTERY_BOX.price} Coins** để mở Lootboard. Chỉ được mở duy nhất **1 hộp** để nhận **Airdrop Points**!
-        </Text>
-
-        <Box style={{ overflowX: "auto" }}>
-          <Group spacing="lg" wrap="nowrap" py="sm">
-            {lootBoxes.map((box, idx) => (
-              <motion.div
-                key={box.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: idx * 0.05 }}
-                whileHover={{ scale: box.opened ? 1 : 1.05, rotate: box.opened ? 0 : 2 }} // Hover effect: Scale up, rotate slightly
-                style={{ minWidth: 120, height: 180 }}
-              >
-                <Button
-                  fullWidth
-                  radius="md"
-                  disabled={box.locked || box.opened}
-                  onClick={() => openBox(idx)}
-                  style={{
-                    height: "100%",
-                    // Thêm gradient cho box chưa mở
-                    background: box.opened
-                      ? "linear-gradient(180deg, #e6fffa, #d1fae5)"
-                      : box.locked
-                        ? "#1f2937"
-                        : "linear-gradient(180deg, #371d5b, #1d0f2c)", // Gradient box
-                    color: box.opened ? "#04505a" : "#fff",
-                    fontSize: 18,
-                    fontWeight: 700,
-                    boxShadow: box.opened ? "0 4px 15px rgba(4, 80, 90, 0.4)" : box.locked ? "none" : "0 4px 15px rgba(162, 89, 255, 0.4)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  {box.opened
-                    ? `+${box.points} AP`
+        <Group wrap="nowrap" spacing="lg" sx={{ overflowX: "auto" }}>
+          {lootBoxes.map((box, i) => (
+            <motion.div key={box.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+              <Button
+                onClick={() => openBox(i)}
+                disabled={box.locked || box.opened}
+                style={{
+                  width: 120,
+                  height: 160,
+                  background: box.opened
+                    ? "linear-gradient(180deg,#d1fae5,#a7f3d0)"
                     : box.locked
-                      ? "🔒 Đã khoá"
-                      : "❓ Mở hộp"}
-                </Button>
-              </motion.div>
-            ))}
-          </Group>
-        </Box>
-
-        <Divider my="md" />
-        <Group position="right">
-          <Button variant="outline" onClick={() => { setLootboardOpen(false); setLootBoxes([]); }}>
-            Đóng
-          </Button>
+                      ? "#222"
+                      : "linear-gradient(180deg,#3f1d66,#1b0e2e)",
+                }}
+              >
+                {box.opened ? `+${box.points} AP` : box.locked ? "Locked" : "❓ Mở"}
+              </Button>
+            </motion.div>
+          ))}
         </Group>
       </Modal>
 
-      {/* EFFECT POPUP - Visual feedback/Particle System (Single harvest) */}
+      {/* ---------------- EFFECT POPUPS ---------------- */}
       <AnimatePresence>
         {effectPopup && (
           <motion.div
-            initial={{ opacity: 0, y: -20, scale: 0.8 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -20, transition: { duration: 0.3 } }}
-            transition={{ type: "spring", stiffness: 300, damping: 25 }}
+            initial={{ opacity: 0, y: -40 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -40 }}
             style={{
               position: "fixed",
               right: 20,
-              top: 24,
-              zIndex: 999,
-              background: "linear-gradient(180deg, #1f0b35, #0b1220)",
-              color: "#fff",
+              top: 20,
               padding: 16,
+              background: "#0b1220",
               borderRadius: 12,
-              boxShadow: "0 8px 30px rgba(162, 89, 255, 0.6)",
-              minWidth: 240,
+              color: "#fff",
               border: `1px solid ${effectPopup.quality.color}`,
-              textAlign: "center"
+              zIndex: 2000,
             }}
           >
-            <Title order={5} style={{ color: effectPopup.quality.color }}>{effectPopup.quality.icon} {effectPopup.quality.label} Quality!</Title>
-            <Text size="sm">💰 +{effectPopup.coins} Coins</Text>
-            <Text size="sm">✨ +{effectPopup.totalAP} AP (Bonus: {effectPopup.bonus})</Text>
-            <Text size="xs" color="dimmed" mt={4}>Thu hoạch {effectPopup.seed.name}</Text>
+            <Title order={5} c={effectPopup.quality.color}>
+              {effectPopup.quality.icon} {effectPopup.quality.label}
+            </Title>
+            <Text>💰 +{effectPopup.coins} Coins</Text>
+            <Text>✨ +{effectPopup.totalAP} AP</Text>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* HARVEST ALL POPUP - Visual feedback (Harvest All) */}
       <AnimatePresence>
         {harvestAllPopup && (
           <motion.div
-            initial={{ opacity: 0, y: -50, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -50 }}
-            transition={{ type: "spring", stiffness: 100 }}
+            initial={{ opacity: 0, scale: 0.85 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0 }}
             style={{
               position: "fixed",
               left: "50%",
+              top: 20,
               transform: "translateX(-50%)",
-              top: 28,
-              zIndex: 998,
-              background: "linear-gradient(180deg, #072a1e, #0b1b2a)",
-              color: "#fff",
+              background: "#0c1725",
+              color: "white",
               padding: 20,
               borderRadius: 12,
-              boxShadow: "0 12px 40px rgba(0,229,255,0.4)",
-              minWidth: 320,
-              textAlign: "center"
+              zIndex: 2000,
+              border: "1px solid #4de1ff",
             }}
           >
-            <Title order={4}>🎉 Thu hoạch {harvestAllPopup.list.length} cây!</Title>
-            <Text size="lg" fw={700} mt={4}>💰 +{harvestAllPopup.coins} Coins • ✨ +{harvestAllPopup.ap} AP</Text>
-            <Divider my="sm" variant="dotted" color="gray" />
-            <Stack spacing={2} align="flex-start">
-              {/* Thêm danh sách chi tiết */}
-              {harvestAllPopup.list.slice(0, 3).map((item, index) => (
-                <Text size="xs" key={index}>
-                  {item.emoji} {item.name}: **+{item.bonus} AP** ({item.quality})
-                </Text>
-              ))}
-              {harvestAllPopup.list.length > 3 && (
-                <Text size="xs" color="dimmed">...và {harvestAllPopup.list.length - 3} loại khác.</Text>
-              )}
-            </Stack>
+            <Title order={4}>🌾 Harvest All!</Title>
+            <Text fw={700} mt={4}>💰 {harvestAllPopup.coins} Coins — ✨ {harvestAllPopup.ap} AP</Text>
+
+            {harvestAllPopup.list.slice(0, 3).map((x, i) => (
+              <Text key={i} size="xs">{x.emoji} {x.name} +{x.bonus} ({x.quality})</Text>
+            ))}
+
+            {harvestAllPopup.list.length > 3 && (
+              <Text size="xs" c="gray">...và {harvestAllPopup.list.length - 3} cây khác</Text>
+            )}
           </motion.div>
         )}
       </AnimatePresence>
+
     </Container>
   );
 }
