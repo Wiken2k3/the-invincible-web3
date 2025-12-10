@@ -3,9 +3,20 @@
 import { memo } from "react";
 import { motion } from "framer-motion";
 
-/* =======================
-   🎨 UI THEME (SUI STYLE)
-======================= */
+interface SeedData {
+  id: string;
+  image: string;
+  name: string;
+  emoji: string;
+}
+
+interface FarmTileProps {
+  seed: SeedData | null;
+  index: number;
+  ready: boolean;
+  onPlant: () => void;
+}
+
 const theme = {
   glassBg: "rgba(255,255,255,0.05)",
   glassBorder: "rgba(255,255,255,0.12)",
@@ -14,10 +25,7 @@ const theme = {
   textMuted: "rgba(255,255,255,0.65)",
 };
 
-/* =======================
-   🧱 MAIN TILE
-======================= */
-function FarmTile({ onPlant, seed, index }) {
+function FarmTile({ seed, ready, onPlant }: FarmTileProps) {
   const hasSeed = Boolean(seed);
 
   return (
@@ -32,49 +40,31 @@ function FarmTile({ onPlant, seed, index }) {
         border: hasSeed
           ? `2px solid ${theme.activeBorder}`
           : `2px dashed ${theme.glassBorder}`,
-        boxShadow: hasSeed
-          ? `0 0 20px ${theme.glow}`
-          : "none",
+        boxShadow: hasSeed ? `0 0 20px ${theme.glow}` : "none",
       }}
     >
-      {/* 🌌 Glow animation when planted */}
       {hasSeed && <GlowOverlay />}
-
-      {/* 🌱 Seed or Empty State */}
-      {hasSeed ? (
-        <SeedImage seed={seed} index={index} />
-      ) : (
-        <EmptyState />
-      )}
+      {hasSeed && seed ? <SeedImage seed={seed} /> : <EmptyState />}
     </motion.div>
   );
 }
 
 export default memo(FarmTile);
 
-/* =======================
-   🌱 SUB COMPONENTS
-======================= */
-
 const GlowOverlay = () => (
   <motion.div
     initial={{ opacity: 0.18 }}
     animate={{ opacity: 0.35 }}
-    transition={{
-      repeat: Infinity,
-      repeatType: "mirror",
-      duration: 3,
-      ease: "easeInOut",
-    }}
+    transition={{ repeat: Infinity, repeatType: "mirror", duration: 3, ease: "easeInOut" }}
     style={styles.glow}
   />
 );
 
-const SeedImage = ({ seed, index }) => (
+const SeedImage = ({ seed }: { seed: SeedData }) => (
   <motion.img
-    key={`seed-${index}`}
+    key={seed.id}
     src={seed.image}
-    alt="seed"
+    alt={seed.name}
     initial={{ scale: 0.7, opacity: 0 }}
     animate={{ scale: 1, opacity: 1 }}
     transition={{ type: "spring", stiffness: 200, damping: 14 }}
@@ -87,16 +77,12 @@ const EmptyState = () => (
     key="empty"
     initial={{ opacity: 0.4 }}
     animate={{ opacity: 0.7 }}
-    transition={{ duration: 1.2, yoyo: Infinity }}
+    transition={{ duration: 1.2, repeat: Infinity, repeatType: "reverse" }}
     style={styles.empty}
   >
     ＋ Plant
   </motion.span>
 );
-
-/* =======================
-   🎨 STYLES
-======================= */
 
 const styles = {
   tile: {
@@ -107,29 +93,24 @@ const styles = {
     alignItems: "center",
     justifyContent: "center",
     cursor: "pointer",
-    position: "relative",
-    overflow: "hidden",
-    userSelect: "none",
+    position: "relative" as const,
+    overflow: "hidden" as const,
+    userSelect: "none" as const,
     backdropFilter: "blur(14px)",
   },
-
   activeBg: "linear-gradient(135deg,#0b1020,#121a35)",
-
   glow: {
-    position: "absolute",
+    position: "absolute" as const,
     inset: 0,
-    background:
-      "radial-gradient(circle at top, rgba(0,229,255,0.35), transparent 65%)",
-    pointerEvents: "none",
+    background: "radial-gradient(circle at top, rgba(0,229,255,0.35), transparent 65%)",
+    pointerEvents: "none" as const,
     zIndex: 0,
   },
-
   seed: {
     width: 64,
     height: 64,
     zIndex: 1,
   },
-
   empty: {
     fontSize: 14,
     fontWeight: 600,

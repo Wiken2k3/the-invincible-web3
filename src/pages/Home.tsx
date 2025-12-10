@@ -1,24 +1,28 @@
+"use client";
+
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
+import React from "react";
 import game from "../assets/game.png";
 
-/* ===================== THEME ===================== */
+/* ===================== 🎨 THEME (MATCH FARM TILE) ===================== */
 
 const theme = {
   bg: "#050B18",
-  card: "rgba(255,255,255,0.06)",
-  border: "rgba(255,255,255,0.12)",
-  primary: "#00D4FF",
-  glow: "rgba(0,212,255,0.6)",
+  glassBg: "rgba(255,255,255,0.05)",
+  glassBorder: "rgba(255,255,255,0.12)",
+  activeBorder: "rgba(0,229,255,0.55)",
+  glow: "rgba(0,229,255,0.35)",
+  primary: "#00E5FF",
   text: "#FFFFFF",
-  textSoft: "rgba(255,255,255,0.7)",
+  textMuted: "rgba(255,255,255,0.65)",
 };
 
 /* ===================== MAIN ===================== */
 
 export default function Home() {
   return (
-    <div style={{ background: theme.bg, color: theme.text, overflow: "hidden" }}>
+    <div style={{ background: theme.bg, color: theme.text }}>
       <BackgroundGlow />
       <Hero />
       <About />
@@ -31,39 +35,19 @@ export default function Home() {
   );
 }
 
-/* ===================== BACKGROUND ===================== */
+/* ===================== 🌌 BACKGROUND ===================== */
 
 const BackgroundGlow = () => (
   <>
     <motion.div
-      animate={{ opacity: [0.4, 0.7, 0.4], scale: [1, 1.2, 1] }}
-      transition={{ duration: 12, repeat: Infinity }}
-      style={{
-        position: "fixed",
-        width: 600,
-        height: 600,
-        borderRadius: "50%",
-        background: theme.glow,
-        filter: "blur(160px)",
-        top: "-10%",
-        left: "-10%",
-        zIndex: -1,
-      }}
+      animate={{ opacity: [0.25, 0.45, 0.25], scale: [1, 1.2, 1] }}
+      transition={{ duration: 16, repeat: Infinity }}
+      style={styles.bgGlowTop as React.CSSProperties}
     />
     <motion.div
-      animate={{ opacity: [0.3, 0.6, 0.3], scale: [1, 1.3, 1] }}
-      transition={{ duration: 14, repeat: Infinity }}
-      style={{
-        position: "fixed",
-        width: 500,
-        height: 500,
-        borderRadius: "50%",
-        background: theme.glow,
-        filter: "blur(180px)",
-        bottom: "-10%",
-        right: "-10%",
-        zIndex: -1,
-      }}
+      animate={{ opacity: [0.2, 0.4, 0.2], scale: [1, 1.3, 1] }}
+      transition={{ duration: 18, repeat: Infinity }}
+      style={styles.bgGlowBottom as React.CSSProperties}
     />
   </>
 );
@@ -71,7 +55,7 @@ const BackgroundGlow = () => (
 /* ===================== SECTIONS ===================== */
 
 const Hero = () => (
-  <Section center full>
+  <Section center={true} full={true}>
     <motion.h1
       initial={{ opacity: 0, y: 40 }}
       animate={{ opacity: 1, y: 0 }}
@@ -84,141 +68,158 @@ const Hero = () => (
     </motion.h1>
 
     <p style={styles.heroDesc}>
-      A next-generation play-to-earn game where your time,
-      skills, and assets are truly owned on-chain.
+      A next-gen on-chain game where your assets truly belong to you.
     </p>
 
-    <PrimaryButton to="/game">Start Playing</PrimaryButton>
+    <PrimaryButton to="/game" full={false}>Start Playing</PrimaryButton>
   </Section>
 );
 
 const About = () => (
-  <Section>
+  <Section center={false} full={false}>
     <SectionTitle title="What is Invincible?" />
-    <p style={styles.textCenter}>
-      Invincible is a Web3 gaming ecosystem built on the Sui blockchain.
-      Players grow in-game assets, earn rewards, and claim NFTs that
-      live permanently in their wallets.
+    <p style={styles.textCenter as React.CSSProperties}>
+      Invincible is a Web3 gaming ecosystem built on Sui.
+      Grow assets, earn rewards, and own NFTs permanently on-chain.
     </p>
   </Section>
 );
 
 const Features = () => (
-  <Section>
+  <Section center={false} full={false}>
     <SectionTitle title="Why Invincible?" />
     <Grid>
       {[
-        ["⚡", "Fast Transactions", "Powered by Sui for instant gameplay"],
-        ["💎", "True Ownership", "NFTs and assets belong to players"],
-        ["🎮", "Real Gameplay", "Skill-based, not farming simulators"],
-        ["🚀", "Early Airdrop", "Rewards for early adopters"],
+        ["⚡", "Fast Transactions", "Near-zero latency on Sui"],
+        ["💎", "True Ownership", "NFTs owned by players"],
+        ["🎮", "Real Gameplay", "Skill-based progression"],
+        ["🚀", "Early Rewards", "Airdrop for pioneers"],
       ].map(([icon, title, desc]) => (
-        <Card key={title}>
+        <GlassCard key={title as string}>
           <h3 style={styles.cardTitle}>
             {icon} {title}
           </h3>
           <p style={styles.cardDesc}>{desc}</p>
-        </Card>
+        </GlassCard>
       ))}
     </Grid>
   </Section>
 );
 
 const Preview = () => (
-  <Section>
+  <Section center={false} full={false}>
     <SectionTitle title="Game Preview" />
-    <Card>
-      <img
-        src={game}
-        alt="Game preview"
-        style={{ width: "100%", borderRadius: 16, marginBottom: 20 }}
-      />
-      <PrimaryButton full to="/game">
+    <GlassCard>
+      <img src={game} alt="preview" style={styles.previewImg} />
+      <PrimaryButton full={true} to="/game">
         Play Game
       </PrimaryButton>
-    </Card>
+    </GlassCard>
   </Section>
 );
 
 const Airdrop = () => (
-  <Section>
+  <Section center={false} full={false}>
     <SectionTitle title="Early Access Airdrop" />
-    <Card>
-      <p style={styles.centerSoft}>
-        Connect your wallet early to receive exclusive NFT
-        and token rewards when the game launches.
+    <GlassCard>
+      <p style={styles.centerSoft as React.CSSProperties}>
+        Connect wallet early to receive exclusive NFTs and tokens.
       </p>
-      <PrimaryButton full to="/reward">
+      <PrimaryButton full={true} to="/reward">
         Join Airdrop
       </PrimaryButton>
-    </Card>
+    </GlassCard>
   </Section>
 );
 
 const Roadmap = () => (
-  <Section>
+  <Section center={false} full={false}>
     <SectionTitle title="Roadmap 2025" />
     <Grid>
       {[
-        ["Q1", "Alpha Gameplay Release"],
-        ["Q2", "NFT & Lootbox System"],
-        ["Q3", "Token Launch & Airdrop"],
+        ["Q1", "Alpha Gameplay"],
+        ["Q2", "NFT System"],
+        ["Q3", "Token & Airdrop"],
         ["Q4", "Marketplace & DAO"],
       ].map(([q, text]) => (
-        <Card key={q}>
+        <GlassCard key={q as string}>
           <h3 style={styles.roadmapQ}>{q}</h3>
           <p style={styles.cardDesc}>{text}</p>
-        </Card>
+        </GlassCard>
       ))}
     </Grid>
   </Section>
 );
 
 const Footer = () => (
-  <div style={styles.footer}>
-    © 2025 Invincible — Web3 Gaming built on Sui
-  </div>
+  <footer style={styles.footer as React.CSSProperties}>
+    © 2025 Invincible — Built on Sui
+  </footer>
 );
 
-/* ===================== UI ===================== */
+/* ===================== UI PRIMITIVES ===================== */
 
-const Section = ({ children, center, full }) => (
+interface SectionProps {
+  children: React.ReactNode;
+  center: boolean;
+  full: boolean;
+}
+
+const Section = ({ children, center, full }: SectionProps) => (
   <section
     style={{
-      padding: full ? "140px 24px" : "100px 24px",
+      padding: full ? "140px 24px" : "96px 24px",
       maxWidth: 1200,
       margin: "0 auto",
-      textAlign: center ? "center" : "left",
+      textAlign: (center ? "center" : "left") as "center" | "left",
     }}
   >
     {children}
   </section>
 );
 
-const SectionTitle = ({ title }) => (
-  <h2 style={styles.sectionTitle}>{title}</h2>
+interface SectionTitleProps {
+  title: string;
+}
+
+const SectionTitle = ({ title }: SectionTitleProps) => (
+  <h2 style={styles.sectionTitle as React.CSSProperties}>{title}</h2>
 );
 
-const Grid = ({ children }) => (
-  <div style={styles.grid}>{children}</div>
-);
+interface GridProps {
+  children: React.ReactNode;
+}
 
-const Card = ({ children }) => (
-  <motion.div whileHover={{ y: -8 }} style={styles.card}>
+const Grid = ({ children }: GridProps) => <div style={styles.grid}>{children}</div>;
+
+interface GlassCardProps {
+  children: React.ReactNode;
+}
+
+const GlassCard = ({ children }: GlassCardProps) => (
+  <motion.div
+    whileHover={{ y: -6, boxShadow: `0 0 22px ${theme.glow}` }}
+    transition={{ type: "spring", stiffness: 200 }}
+    style={styles.card}
+  >
     {children}
   </motion.div>
 );
 
-const PrimaryButton = ({ children, full, to }) => (
-  <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.97 }}>
+interface PrimaryButtonProps {
+  children: React.ReactNode;
+  full: boolean;
+  to: string;
+}
+
+const PrimaryButton = ({ children, full, to }: PrimaryButtonProps) => (
+  <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.96 }}>
     <Link
       to={to}
       style={{
         ...styles.button,
         width: full ? "100%" : "auto",
-        display: "inline-block",
-        textAlign: "center",
-        textDecoration: "none",
+        textAlign: "center" as const,
       }}
     >
       {children}
@@ -226,74 +227,97 @@ const PrimaryButton = ({ children, full, to }) => (
   </motion.div>
 );
 
-/* ===================== STYLES ===================== */
+/* ===================== 🎨 STYLES ===================== */
 
 const styles = {
   heroTitle: {
-    fontSize: "clamp(3rem, 6vw, 4.5rem)",
+    fontSize: "clamp(3rem,6vw,4.5rem)",
     fontWeight: 900,
     lineHeight: 1.1,
-    textShadow: "0 0 30px rgba(0,212,255,0.35)",
+    textShadow: `0 0 32px ${theme.glow}`,
   },
   heroDesc: {
-    maxWidth: 640,
-    margin: "32px auto",
-    fontSize: "1.15rem",
-    color: theme.textSoft,
+    maxWidth: 620,
+    margin: "28px auto",
+    fontSize: "1.1rem",
+    color: theme.textMuted,
   },
   sectionTitle: {
     fontSize: "2.3rem",
-    textAlign: "center",
+    textAlign: "center" as const,
     fontWeight: 800,
     marginBottom: 48,
   },
   textCenter: {
     maxWidth: 720,
     margin: "0 auto",
-    textAlign: "center",
-    color: theme.textSoft,
+    textAlign: "center" as const,
+    color: theme.textMuted,
   },
   centerSoft: {
-    textAlign: "center",
-    marginBottom: 24,
-    color: theme.textSoft,
+    textAlign: "center" as const,
+    color: theme.textMuted,
+    marginBottom: 22,
   },
   grid: {
     display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(240px,1fr))",
+    gridTemplateColumns: "repeat(auto-fit,minmax(240px,1fr))",
     gap: 24,
   },
   card: {
-    background: theme.card,
-    border: `1px solid ${theme.border}`,
+    background: theme.glassBg,
+    border: `1px solid ${theme.glassBorder}`,
     borderRadius: 20,
     padding: 28,
-    backdropFilter: "blur(20px)",
+    backdropFilter: "blur(18px)",
   },
-  cardTitle: {
-    fontSize: "1.3rem",
-    marginBottom: 12,
-  },
-  cardDesc: {
-    color: theme.textSoft,
-  },
+  cardTitle: { fontSize: "1.25rem", marginBottom: 12 },
+  cardDesc: { color: theme.textMuted },
   roadmapQ: {
     fontSize: "2rem",
     color: theme.primary,
     marginBottom: 8,
   },
+  previewImg: {
+    width: "100%",
+    borderRadius: 16,
+    marginBottom: 20,
+  },
   button: {
-    padding: "16px 42px",
+    display: "inline-block",
+    padding: "15px 42px",
     borderRadius: 14,
     fontWeight: 700,
-    fontSize: "1.05rem",
-    color: "#000",
     background: theme.primary,
+    color: "#000",
+    textDecoration: "none",
   },
   footer: {
     padding: "48px 24px",
-    textAlign: "center",
-    color: theme.textSoft,
-    borderTop: `1px solid ${theme.border}`,
+    textAlign: "center" as const,
+    color: theme.textMuted,
+    borderTop: `1px solid ${theme.glassBorder}`,
+  },
+  bgGlowTop: {
+    position: "fixed" as const,
+    width: 600,
+    height: 600,
+    background: theme.glow,
+    borderRadius: "50%",
+    filter: "blur(160px)",
+    top: "-10%",
+    left: "-10%",
+    zIndex: -1,
+  },
+  bgGlowBottom: {
+    position: "fixed" as const,
+    width: 500,
+    height: 500,
+    background: theme.glow,
+    borderRadius: "50%",
+    filter: "blur(180px)",
+    bottom: "-10%",
+    right: "-10%",
+    zIndex: -1,
   },
 };

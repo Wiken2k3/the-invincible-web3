@@ -10,19 +10,20 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@mantine/core": "^8.3.9",
-    "@mantine/hooks": "^8.3.9",
-    "@mantine/notifications": "^8.3.9",
+    "@mantine/core": "^8.3.10",
+    "@mantine/hooks": "^8.3.10",
+    "@mantine/notifications": "^8.3.10",
     "@mysten/dapp-kit": "^0.19.11",
     "@mysten/sui": "^1.45.2",
-    "@mysten/sui.js": "^0.54.1",
     "@tabler/icons-react": "^3.35.0",
+    "@tailwindcss/vite": "^4.1.17",
     "framer-motion": "^12.23.25",
     "lucide-react": "^0.555.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-router-dom": "^7.10.0",
-    "react-toastify": "^11.0.5"
+    "react-toastify": "^11.0.5",
+    "tailwindcss": "^4.1.17"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
@@ -35,8 +36,6 @@
     "eslint-plugin-react-refresh": "^0.4.24",
     "globals": "^16.5.0",
     "typescript": "~5.9.3",
-    "@typescript-eslint/eslint-plugin": "^8.46.4",
-    "@typescript-eslint/parser": "^8.46.4",
-    "vite": "^4.0.0"
+    "vite": "^7.2.4"
   }
 }

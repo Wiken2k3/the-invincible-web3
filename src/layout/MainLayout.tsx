@@ -6,7 +6,6 @@ import {
   Image,
   NavLink,
   Divider,
-  Box,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { Link, Outlet, useLocation } from "react-router-dom";
@@ -41,8 +40,7 @@ export default function MainLayout() {
       padding="lg"
       styles={{
         main: {
-          background:
-            "radial-gradient(circle at top,#1a1230 0%,#09080f 80%)",
+          background: "radial-gradient(circle at top,#1a1230 0%,#09080f 80%)",
         },
       }}
     >
@@ -52,7 +50,7 @@ export default function MainLayout() {
           backdropFilter: UI.blur,
           background: "rgba(18,18,30,0.6)",
           borderBottom: UI.border,
-        }}
+        } as React.CSSProperties}
       >
         <Group h="100%" px="md" justify="space-between">
           <Group gap="sm">
@@ -70,7 +68,7 @@ export default function MainLayout() {
             style={{
               background: UI.gradient,
               boxShadow: "0 0 16px rgba(0,229,255,0.5)",
-            }}
+            } as React.CSSProperties}
           >
             Connect Wallet
           </Button>
@@ -84,7 +82,7 @@ export default function MainLayout() {
           backdropFilter: UI.blur,
           background: "rgba(20,20,35,0.25)",
           borderRight: UI.border,
-        }}
+        } as React.CSSProperties}
       >
         <Divider opacity={0.06} mb="sm" />
 
@@ -99,6 +97,7 @@ export default function MainLayout() {
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}
+          style={{} as React.CSSProperties}
         >
           <Outlet />
         </motion.div>
@@ -110,7 +109,13 @@ export default function MainLayout() {
 /* =========================
    🌟 NAV ITEM
 ========================= */
-function NavItem({ label, to, active }) {
+type NavItemProps = {
+  label: string;
+  to: string;
+  active: boolean;
+};
+
+function NavItem({ label, to, active }: NavItemProps) {
   return (
     <motion.div whileHover={{ x: 6 }}>
       <NavLink

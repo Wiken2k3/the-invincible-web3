@@ -4,7 +4,7 @@
 
 "use client";
 
-import React, { useEffect, useMemo, useState, useCallback } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import {
   Title,
   Text,
@@ -21,7 +21,6 @@ import {
   SimpleGrid,
   Select,
   Box,
-  Divider,
 } from "@mantine/core";
 import { showNotification } from "@mantine/notifications";
 import { motion, AnimatePresence } from "framer-motion";
@@ -34,8 +33,71 @@ import rareImg from "../assets/seeds/rare.png";
 import epicImg from "../assets/seeds/epic.png";
 import legendaryImg from "../assets/seeds/legendary.png";
 
+/* -------------------------------- TYPES ------------------------------ */
+interface EffectQuality {
+  id: string;
+  label: string;
+  weight: number;
+  bonus: number;
+  color: string;
+  icon: string;
+}
+
+interface SeedDefinition {
+  id: string;
+  name: string;
+  price: number;
+  growSec: number;
+  rarity: string;
+  airdrop: number;
+  color: string;
+  img: string;
+  emoji: string;
+}
+
+interface Plot {
+  seedId: string;
+  plantedAt: number;
+  readyAt: number;
+}
+
+interface GameState {
+  coins: number;
+  airdropPoints: number;
+  inventory: Record<string, number>;
+  plots: (Plot | null)[];
+}
+
+interface EffectPopup {
+  seed: SeedDefinition;
+  coins: number;
+  bonus: number;
+  totalAP: number;
+  quality: EffectQuality;
+}
+
+interface HarvestDetail {
+  name: string;
+  emoji: string;
+  bonus: number;
+  quality: string;
+}
+
+interface HarvestAllPopup {
+  coins: number;
+  ap: number;
+  list: HarvestDetail[];
+}
+
+interface LootBox {
+  id: number;
+  points: number;
+  opened: boolean;
+  locked: boolean;
+}
+
 /* -------------------------------- EFFECT CONFIG ------------------------------ */
-const EFFECT_QUALITY = [
+const EFFECT_QUALITY: EffectQuality[] = [
   { id: "normal", label: "Thường", weight: 40, bonus: 0, color: "#888", icon: "🌱" },
   { id: "bronze", label: "Đồng", weight: 30, bonus: 5, color: "#cd7f32", icon: "🥉" },
   { id: "silver", label: "Bạc", weight: 20, bonus: 10, color: "#c0c0c0", icon: "🥈" },
@@ -43,7 +105,7 @@ const EFFECT_QUALITY = [
   { id: "diamond", label: "Kim Cương", weight: 2, bonus: 50, color: "#4de1ff", icon: "💎" },
 ];
 
-function pickEffectQuality() {
+function pickEffectQuality(): EffectQuality {
   const total = EFFECT_QUALITY.reduce((s, q) => s + q.weight, 0);
   let r = Math.random() * total;
   for (const q of EFFECT_QUALITY) {
@@ -54,7 +116,7 @@ function pickEffectQuality() {
 }
 
 /* -------------------------------- GAME DATA ------------------------------ */
-const SEED_DEFINITIONS = {
+const SEED_DEFINITIONS: Record<string, SeedDefinition> = {
   common: { id: "common", name: "Hạt bình thường", price: 10, growSec: 15, rarity: "Common", airdrop: 1, color: "green", img: commonImg, emoji: "🌱" },
   rare: { id: "rare", name: "Hạt hiếm", price: 35, growSec: 30, rarity: "Rare", airdrop: 3, color: "lime", img: rareImg, emoji: "🌿" },
   epic: { id: "epic", name: "Hạt cực hiếm", price: 120, growSec: 60, rarity: "Epic", airdrop: 8, color: "teal", img: epicImg, emoji: "🌺" },
@@ -66,7 +128,7 @@ const STORAGE_KEY = "farm_game_v7_fixed";
 const NUM_PLOTS = 9;
 
 /* -------------------------------- LOAD / SAVE ------------------------------ */
-function loadState() {
+function loadState(): GameState | null {
   if (typeof window === "undefined") return null;
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -75,7 +137,7 @@ function loadState() {
     return null;
   }
 }
-function saveState(state) {
+function saveState(state: GameState): void {
   if (typeof window === "undefined") return;
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
@@ -83,8 +145,8 @@ function saveState(state) {
 }
 
 /* -------------------------------- UTILS ------------------------------ */
-function uniqueRandomInts(count, min, max) {
-  const set = new Set();
+function uniqueRandomInts(count: number, min: number, max: number): number[] {
+  const set = new Set<number>();
   const range = max - min + 1;
   while (set.size < count && set.size < range) {
     set.add(Math.floor(Math.random() * range) + min);
@@ -104,10 +166,10 @@ const gradientButtonStyle = {
   transition: "0.2s",
 };
 
-const FarmPlotCard = ({ children }) => <Card radius="lg" p="lg" style={glassCardStyle}>{children}</Card>;
-const SectionCard = ({ children }) => <Card radius="lg" p="lg" style={glassCardStyle}>{children}</Card>;
+const FarmPlotCard = ({ children }: { children: React.ReactNode }) => <Card radius="lg" p="lg" style={glassCardStyle}>{children}</Card>;
+const SectionCard = ({ children }: { children: React.ReactNode }) => <Card radius="lg" p="lg" style={glassCardStyle}>{children}</Card>;
 
-const HeroBox = ({ children }) => (
+const HeroBox = ({ children }: { children: React.ReactNode }) => (
   <Box
     style={{
       background:
@@ -134,17 +196,17 @@ export default function GamePage() {
   const [selectedSeed, setSelectedSeed] = useState("common");
 
   const [selectPlantModal, setSelectPlantModal] = useState(false);
-  const [activePlotIndex, setActivePlotIndex] = useState(null);
+  const [activePlotIndex, setActivePlotIndex] = useState<number | null>(null);
 
   const [isLootboardOpen, setLootboardOpen] = useState(false);
-  const [lootBoxes, setLootBoxes] = useState([]);
+  const [lootBoxes, setLootBoxes] = useState<LootBox[]>([]);
 
-  const [effectPopup, setEffectPopup] = useState(null);
-  const [harvestAllPopup, setHarvestAllPopup] = useState(null);
+  const [effectPopup, setEffectPopup] = useState<EffectPopup | null>(null);
+  const [harvestAllPopup, setHarvestAllPopup] = useState<HarvestAllPopup | null>(null);
 
   /* -------------------------------- AUTO UPDATE PROGRESS ------------------------------ */
   useEffect(() => {
-    const t = setInterval(() => setPlots((p) => [...p]), 1000);
+    const t = setInterval(() => setPlots((p: (Plot | null)[]) => [...p]), 1000);
     return () => clearInterval(t);
   }, []);
 
@@ -153,7 +215,7 @@ export default function GamePage() {
   }, [coins, airdropPoints, inventory, plots]);
 
   /* -------------------------------- BUY SEED ------------------------------ */
-  const buySeed = useCallback((seedId, amount = 1) => {
+  const buySeed = useCallback((seedId: string, amount = 1) => {
     const sd = SEED_DEFINITIONS[seedId];
     if (!sd) return;
 
@@ -161,27 +223,28 @@ export default function GamePage() {
     if (coins < cost)
       return showNotification({ color: "red", title: "Không đủ Coins", message: `Cần ${cost} Coins` });
 
-    setCoins((c) => c - cost);
-    setInventory((inv) => ({ ...inv, [seedId]: (inv[seedId] || 0) + amount }));
+    setCoins((c: number) => c - cost);
+    setInventory((inv: Record<string, number>) => ({ ...inv, [seedId]: (inv[seedId] || 0) + amount }));
 
     showNotification({ color: "green", title: "Mua thành công!", message: `Đã mua ${amount} ${sd.name}` });
   }, [coins]);
 
   /* -------------------------------- PLANT ------------------------------ */
-  const openSelectPlantModal = useCallback((i) => {
+  const openSelectPlantModal = useCallback((i: number) => {
     setActivePlotIndex(i);
     setSelectPlantModal(true);
   }, []);
 
-  const confirmPlant = useCallback((seedId) => {
+  const confirmPlant = useCallback((seedId: string) => {
     if (activePlotIndex === null) return;
     if ((inventory[seedId] ?? 0) <= 0)
-      return showNotification({ color: "orange", title: "Không đủ hạt giống" });
+      return showNotification({ color: "orange", title: "Không đủ hạt giống", message: "" });
 
-    setPlots((prev) => {
+    setPlots((prev: (Plot | null)[]) => {
       if (prev[activePlotIndex]) return prev;
 
       const sd = SEED_DEFINITIONS[seedId];
+      if (!sd) return prev;
       const now = Date.now();
       const clone = [...prev];
       clone[activePlotIndex] = {
@@ -192,30 +255,33 @@ export default function GamePage() {
       return clone;
     });
 
-    setInventory((inv) => ({ ...inv, [seedId]: inv[seedId] - 1 }));
+    setInventory((inv: Record<string, number>) => ({ ...inv, [seedId]: inv[seedId] - 1 }));
     setSelectPlantModal(false);
 
     showNotification({ color: "blue", title: "Đã trồng!", message: "Hãy chờ cây lớn." });
   }, [activePlotIndex, inventory]);
 
   /* -------------------------------- HARVEST ------------------------------ */
-  const harvest = useCallback((i) => {
-    setPlots((prev) => {
+  const harvest = useCallback((i: number) => {
+    setPlots((prev: (Plot | null)[]) => {
       const p = prev[i];
       if (!p) return prev;
 
       const now = Date.now();
-      if (now < p.readyAt)
-        return showNotification({ color: "yellow", title: "Cây chưa chín" });
+      if (now < p.readyAt) {
+        showNotification({ color: "yellow", title: "Cây chưa chín", message: "" });
+        return prev;
+      }
 
       const sd = SEED_DEFINITIONS[p.seedId];
+      if (!sd) return prev;
       const baseReward = Math.round(sd.price * (0.6 + Math.random() * 0.8));
 
       const q = pickEffectQuality();
       const totalAP = sd.airdrop + q.bonus;
 
-      setCoins((c) => c + baseReward);
-      setAirdropPoints((a) => a + totalAP);
+      setCoins((c: number) => c + baseReward);
+      setAirdropPoints((a: number) => a + totalAP);
 
       setEffectPopup({
         seed: sd,
@@ -226,7 +292,7 @@ export default function GamePage() {
       });
       setTimeout(() => setEffectPopup(null), 1400);
 
-      return prev.map((x, idx) => (idx === i ? null : x));
+      return prev.map((x: Plot | null, idx: number) => (idx === i ? null : x));
     });
   }, []);
 
@@ -235,13 +301,14 @@ export default function GamePage() {
     const now = Date.now();
     let totalCoins = 0;
     let totalAP = 0;
-    const details = [];
+    const details: HarvestDetail[] = [];
 
-    setPlots((prev) => {
-      const updated = prev.map((p) => {
+    setPlots((prev: (Plot | null)[]) => {
+      const updated = prev.map((p: Plot | null) => {
         if (!p || now < p.readyAt) return p;
 
         const sd = SEED_DEFINITIONS[p.seedId];
+        if (!sd) return p;
         const baseReward = Math.round(sd.price * (0.6 + Math.random() * 0.8));
 
         const q = pickEffectQuality();
@@ -255,12 +322,12 @@ export default function GamePage() {
       });
 
       if (details.length === 0) {
-        showNotification({ color: "orange", title: "Không có cây chín." });
+        showNotification({ color: "orange", title: "Không có cây chín.", message: "" });
         return prev;
       }
 
-      setCoins((c) => c + totalCoins);
-      setAirdropPoints((a) => a + totalAP);
+      setCoins((c: number) => c + totalCoins);
+      setAirdropPoints((a: number) => a + totalAP);
 
       setHarvestAllPopup({ coins: totalCoins, ap: totalAP, list: details });
       setTimeout(() => setHarvestAllPopup(null), 2600);
@@ -272,21 +339,21 @@ export default function GamePage() {
   /* -------------------------------- LOOTBOARD ------------------------------ */
   const openLootboard = useCallback(() => {
     if (coins < MYSTERY_BOX.minCoinToOpen)
-      return showNotification({ color: "red", title: "Cần 500 Coins để mở!" });
+      return showNotification({ color: "red", title: "Cần 500 Coins để mở!", message: "" });
 
-    if (coins < MYSTERY_BOX.price) return showNotification({ color: "red", title: "Không đủ Coins!" });
+    if (coins < MYSTERY_BOX.price) return showNotification({ color: "red", title: "Không đủ Coins!", message: "" });
 
-    setCoins((c) => c - MYSTERY_BOX.price);
+    setCoins((c: number) => c - MYSTERY_BOX.price);
 
     const points = uniqueRandomInts(10, 10, 100);
-    setLootBoxes(points.map((pt, i) => ({ id: i, points: pt, opened: false, locked: false })));
+    setLootBoxes(points.map((pt: number, i: number) => ({ id: i, points: pt, opened: false, locked: false })));
 
     setLootboardOpen(true);
   }, [coins]);
 
-  const openBox = useCallback((idx) => {
-    setLootBoxes((prev) => {
-      const opened = prev.some((b) => b.opened);
+  const openBox = useCallback((idx: number) => {
+    setLootBoxes((prev: LootBox[]) => {
+      const opened = prev.some((b: LootBox) => b.opened);
       if (opened) return prev;
 
       const copy = [...prev];
@@ -294,18 +361,19 @@ export default function GamePage() {
 
       for (let i = 0; i < copy.length; i++) if (i !== idx) copy[i].locked = true;
 
-      setAirdropPoints((a) => a + copy[idx].points);
+      setAirdropPoints((a: number) => a + copy[idx].points);
 
-      showNotification({ color: "grape", title: `+${copy[idx].points} AP!` });
+      showNotification({ color: "grape", title: `+${copy[idx].points} AP!`, message: "" });
 
       return copy;
     });
   }, []);
 
   /* -------------------------------- PROGRESS ------------------------------ */
-  const plotProgress = (p) => {
+  const plotProgress = (p: Plot | null): number => {
     if (!p) return 0;
     const sd = SEED_DEFINITIONS[p.seedId];
+    if (!sd) return 0;
     const total = sd.growSec * 1000;
     const elapsed = Date.now() - p.plantedAt;
     return Math.min(100, Math.floor((elapsed / total) * 100));
@@ -319,7 +387,7 @@ export default function GamePage() {
 
       {/* ---------------- HERO ---------------- */}
       <HeroBox>
-        <Group position="apart" px="md">
+        <Group justify="space-between" px="md">
           <div>
             <Title order={2} fw={800} c="white">🌾 Farming Airdrop Game</Title>
             <Text size="sm" c="gray">Play • Earn • Claim</Text>
@@ -342,13 +410,13 @@ export default function GamePage() {
         {/* LEFT FARM */}
         <Grid.Col span={{ base: 12, md: 7 }}>
           <FarmPlotCard>
-            <Group position="apart" mb="sm">
-              <Title order={4} c="white">🪴 Khu trồng trọt</Title>
+            <Group justify="space-between" mb="sm">
+              <Title order={4} c="white"> Khu trồng trọt</Title>
               <Button color="green" size="sm" onClick={harvestAll}>🌾 Harvest All</Button>
             </Group>
 
             <SimpleGrid cols={{ base: 2, sm: 3 }} spacing="lg">
-              {plots.map((p, i) => {
+              {plots.map((p: Plot | null, i: number) => {
                 const def = p ? SEED_DEFINITIONS[p.seedId] : null;
                 const ready = p && Date.now() >= p.readyAt;
                 const progress = plotProgress(p);
@@ -358,12 +426,12 @@ export default function GamePage() {
                     <FarmTile
                       seed={def ? { id: def.id, image: def.img, name: def.name, emoji: def.emoji } : null}
                       index={i}
-                      ready={ready}
+                      ready={!!ready}
                       onPlant={() => p ? harvest(i) : openSelectPlantModal(i)}
                     />
 
                     <Text size="xs" mt={6} c="gray">
-                      {p ? (ready ? "✅ Sẵn sàng" : `${def.emoji} Đang lớn`) : "Trống"}
+                      {p ? (ready ? "✅ Sẵn sàng" : `${def?.emoji} Đang lớn`) : "Trống"}
                     </Text>
 
                     {p && (
@@ -437,8 +505,8 @@ export default function GamePage() {
                       size="xs"
                       disabled={(inventory[sd.id] ?? 0) <= 0}
                       onClick={() => {
-                        const empty = plots.findIndex((p) => !p);
-                        if (empty === -1) return showNotification({ color: "orange", title: "Không còn ô trống!" });
+                        const empty = plots.findIndex((p: Plot | null) => !p);
+                        if (empty === -1) return showNotification({ color: "orange", title: "Không còn ô trống!", message: "" });
 
                         setActivePlotIndex(empty);
                         confirmPlant(sd.id);
@@ -460,7 +528,6 @@ export default function GamePage() {
         onClose={() => setSelectPlantModal(false)}
         centered
         title={`Trồng vào ô #${activePlotIndex !== null ? activePlotIndex + 1 : ""}`}
-        styles={{ modal: glassCardStyle }}
       >
         <SimpleGrid cols={2}>
           {Object.values(SEED_DEFINITIONS).map((sd) => {
@@ -476,7 +543,7 @@ export default function GamePage() {
                   </div>
                 </Group>
 
-                <Group position="apart" mt="xs">
+                <Group justify="space-between" mt="xs">
                   <Text size="sm">Stock: {stock}</Text>
 
                   <Button
@@ -501,10 +568,9 @@ export default function GamePage() {
         size="xl"
         centered
         title="🎁 Mystery Box — Chọn 1 hộp"
-        styles={{ modal: glassCardStyle }}
       >
-        <Group wrap="nowrap" spacing="lg" sx={{ overflowX: "auto" }}>
-          {lootBoxes.map((box, i) => (
+        <Group wrap="nowrap" gap="lg" style={{ overflowX: "auto" }}>
+          {lootBoxes.map((box: LootBox, i: number) => (
             <motion.div key={box.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
               <Button
                 onClick={() => openBox(i)}
@@ -576,7 +642,7 @@ export default function GamePage() {
             <Title order={4}>🌾 Harvest All!</Title>
             <Text fw={700} mt={4}>💰 {harvestAllPopup.coins} Coins — ✨ {harvestAllPopup.ap} AP</Text>
 
-            {harvestAllPopup.list.slice(0, 3).map((x, i) => (
+            {harvestAllPopup.list.slice(0, 3).map((x: HarvestDetail, i: number) => (
               <Text key={i} size="xs">{x.emoji} {x.name} +{x.bonus} ({x.quality})</Text>
             ))}
 

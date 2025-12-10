@@ -1,10 +1,18 @@
 import { Card, Text, Image } from "@mantine/core";
 import { motion } from "framer-motion";
 
-export default function PlotCell({ plant }) {
-  // plant = null | { rarity: "Common", icon: "...", progress: 0-100 }
+type Plant = {
+  rarity: "Common" | "Rare" | "Epic" | "Legendary";
+  icon: string;
+  progress: number; // 0-100
+};
 
-  const borderGlow = {
+type PlotCellProps = {
+  plant: Plant | null;
+};
+
+export default function PlotCell({ plant }: PlotCellProps) {
+  const borderGlow: Record<Plant["rarity"], string> = {
     Common: "0 0 10px rgba(0,255,100,0.4)",
     Rare: "0 0 10px rgba(0,150,255,0.4)",
     Epic: "0 0 12px rgba(200,0,255,0.5)",
@@ -41,13 +49,12 @@ export default function PlotCell({ plant }) {
             display: "flex",
             justifyContent: "center",
             marginTop: 20,
-          }}
+          } as React.CSSProperties} // ✅ ép kiểu
         >
           <Image src={plant.icon} w={60} />
         </motion.div>
       )}
 
-      {/* Progress bar (growth) */}
       {plant && (
         <div
           style={{
@@ -58,7 +65,7 @@ export default function PlotCell({ plant }) {
             bottom: 0,
             left: 0,
             transition: "0.3s",
-          }}
+          } as React.CSSProperties} // ✅ ép kiểu
         />
       )}
     </Card>
