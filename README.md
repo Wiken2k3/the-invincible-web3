@@ -200,7 +200,9 @@ npm run build
 ```
 # 📬 Liên hệ
 
-📧 Email: wiken2k3.dev@gmail.com
+📧 Email: wiken2k3@gmail.com
 ## Profile: (https://wikenportfolio.vercel.app)
 
 🐦 Facebook: https://www.facebook.com/Wiken2k3
+# Web đã được deloy tại Vercel :
+[Tại đây](https://the-invincible-web3.vercel.app/)
