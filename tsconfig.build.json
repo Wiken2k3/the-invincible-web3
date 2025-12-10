@@ -1,0 +1,14 @@
+{
+  "extends": "./tsconfig.app.json",
+  "compilerOptions": {
+    "strict": false,
+    "noImplicitAny": false,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+
+    "suppressImplicitAnyIndexErrors": true,
+    "isolatedModules": false,
+    "skipLibCheck": true,
+    "esModuleInterop": true
+  }
+}
