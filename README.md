@@ -201,5 +201,6 @@ npm run build
 # 📬 Liên hệ
 
 📧 Email: wiken2k3.dev@gmail.com
+## Profile: (https://wikenportfolio.vercel.app)
 
-🐦 Twitter: https://twitter.com/Wiken2k3
+🐦 Facebook: https://www.facebook.com/Wiken2k3
