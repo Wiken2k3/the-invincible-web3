@@ -21,6 +21,7 @@ import {
   SimpleGrid,
   Select,
   Box,
+  Stepper,
 } from "@mantine/core";
 import { showNotification } from "@mantine/notifications";
 import { motion, AnimatePresence } from "framer-motion";
@@ -156,14 +157,22 @@ function uniqueRandomInts(count: number, min: number, max: number): number[] {
 
 /* -------------------------------- STYLES ------------------------------ */
 const glassCardStyle = {
-  background: "rgba(255,255,255,0.05)",
-  backdropFilter: "blur(8px)",
-  border: "1px solid rgba(255,255,255,0.12)",
+  background: "rgba(34, 139, 34, 0.08)",
+  backdropFilter: "blur(10px)",
+  border: "1px solid rgba(144, 238, 144, 0.2)",
+  boxShadow: "0 4px 20px rgba(34, 139, 34, 0.1)",
 };
 
 const gradientButtonStyle = {
-  background: "linear-gradient(90deg, #A259FF, #00E5FF)",
-  transition: "0.2s",
+  background: "linear-gradient(135deg, #22c55e, #16a34a, #15803d)",
+  transition: "all 0.3s ease",
+  boxShadow: "0 4px 15px rgba(34, 197, 94, 0.3)",
+};
+
+const helpButtonStyle = {
+  background: "linear-gradient(135deg, #f59e0b, #d97706)",
+  transition: "all 0.3s ease",
+  boxShadow: "0 4px 15px rgba(245, 158, 11, 0.3)",
 };
 
 const FarmPlotCard = ({ children }: { children: React.ReactNode }) => <Card radius="lg" p="lg" style={glassCardStyle}>{children}</Card>;
@@ -172,11 +181,17 @@ const SectionCard = ({ children }: { children: React.ReactNode }) => <Card radiu
 const HeroBox = ({ children }: { children: React.ReactNode }) => (
   <Box
     style={{
-      background:
-        "radial-gradient(circle at 20% 10%, rgba(162,89,255,0.12), transparent 35%), radial-gradient(circle at 80% 90%, rgba(0,229,255,0.12), transparent 40%), linear-gradient(180deg,#0a0812,#111827)",
+      background: `
+        radial-gradient(circle at 20% 10%, rgba(34, 197, 94, 0.08), transparent 35%),
+        radial-gradient(circle at 80% 90%, rgba(14, 165, 233, 0.06), transparent 40%),
+        radial-gradient(circle at 50% 50%, rgba(245, 158, 11, 0.05), transparent 50%),
+        linear-gradient(180deg, #0a0f1a 0%, #0f172a 50%, #1a1f2e 100%)
+      `,
       padding: "32px 0",
-      borderRadius: 12,
+      borderRadius: 16,
       marginBottom: 20,
+      border: "1px solid rgba(144, 238, 144, 0.25)",
+      boxShadow: "0 8px 32px rgba(14, 165, 233, 0.12)",
     }}
   >
     {children}
@@ -203,6 +218,8 @@ export default function GamePage() {
 
   const [effectPopup, setEffectPopup] = useState<EffectPopup | null>(null);
   const [harvestAllPopup, setHarvestAllPopup] = useState<HarvestAllPopup | null>(null);
+  const [showWelcomeModal, setShowWelcomeModal] = useState(false);
+  const [welcomeStep, setWelcomeStep] = useState(0);
 
   /* -------------------------------- AUTO UPDATE PROGRESS ------------------------------ */
   useEffect(() => {
@@ -213,6 +230,14 @@ export default function GamePage() {
   useEffect(() => {
     saveState({ coins, airdropPoints, inventory, plots });
   }, [coins, airdropPoints, inventory, plots]);
+
+  /* -------------------------------- WELCOME MODAL ------------------------------ */
+  useEffect(() => {
+    const hasSeenWelcome = localStorage.getItem("has_seen_welcome");
+    if (!hasSeenWelcome) {
+      setTimeout(() => setShowWelcomeModal(true), 500);
+    }
+  }, []);
 
   /* -------------------------------- BUY SEED ------------------------------ */
   const buySeed = useCallback((seedId: string, amount = 1) => {
@@ -226,7 +251,12 @@ export default function GamePage() {
     setCoins((c: number) => c - cost);
     setInventory((inv: Record<string, number>) => ({ ...inv, [seedId]: (inv[seedId] || 0) + amount }));
 
-    showNotification({ color: "green", title: "Mua thành công!", message: `Đã mua ${amount} ${sd.name}` });
+    showNotification({ 
+      color: "green", 
+      title: "Mua thành công!", 
+      message: `Đã mua ${amount} ${sd.name}`,
+      autoClose: 2000,
+    });
   }, [coins]);
 
   /* -------------------------------- PLANT ------------------------------ */
@@ -290,7 +320,7 @@ export default function GamePage() {
         totalAP,
         quality: q,
       });
-      setTimeout(() => setEffectPopup(null), 1400);
+      setTimeout(() => setEffectPopup(null), 2000);
 
       return prev.map((x: Plot | null, idx: number) => (idx === i ? null : x));
     });
@@ -330,7 +360,7 @@ export default function GamePage() {
       setAirdropPoints((a: number) => a + totalAP);
 
       setHarvestAllPopup({ coins: totalCoins, ap: totalAP, list: details });
-      setTimeout(() => setHarvestAllPopup(null), 2600);
+      setTimeout(() => setHarvestAllPopup(null), 3000);
 
       return updated;
     });
@@ -382,145 +412,488 @@ export default function GamePage() {
   /* ============================================================================================
       RENDER
   ============================================================================================ */
+  const welcomeSteps = [
+    {
+      title: "Chào mừng đến với The Invincible! 🌾",
+      content: "Đây là game farming Web3 trên Sui. Bạn sẽ trồng cây, thu hoạch và kiếm Coins cùng Airdrop Points!",
+    },
+    {
+      title: "Cách chơi cơ bản 📖",
+      content: "1. Mua hạt giống từ cửa hàng\n2. Trồng vào các ô trống\n3. Chờ cây lớn (thời gian tùy loại hạt)\n4. Thu hoạch để nhận Coins và AP!",
+    },
+    {
+      title: "Hệ thống hạt giống 🌱",
+      content: "• Common (🌱): 10 Coins, 15s, +1 AP\n• Rare (🌿): 35 Coins, 30s, +3 AP\n• Epic (🌺): 120 Coins, 60s, +8 AP\n• Legendary (🌸): 400 Coins, 180s, +25 AP",
+    },
+    {
+      title: "Mystery Box & Bonus 🎁",
+      content: "• Mở Mystery Box với 50 Coins để nhận AP ngẫu nhiên\n• Mỗi lần thu hoạch có thể nhận bonus chất lượng (Thường → Kim Cương)\n• Bonus càng cao, AP nhận được càng nhiều!",
+    },
+    {
+      title: "Sẵn sàng bắt đầu! 🚀",
+      content: "Bạn đã có 100 Coins và 2 hạt Common để bắt đầu. Hãy trồng và thu hoạch để kiếm thêm Coins!",
+    },
+  ];
+
+  const handleWelcomeClose = () => {
+    setShowWelcomeModal(false);
+    localStorage.setItem("has_seen_welcome", "true");
+  };
+
+  const handleWelcomeNext = () => {
+    if (welcomeStep < welcomeSteps.length - 1) {
+      setWelcomeStep(welcomeStep + 1);
+    } else {
+      handleWelcomeClose();
+    }
+  };
+
   return (
     <Container size="xl" py="lg">
-
-      {/* ---------------- HERO ---------------- */}
-      <HeroBox>
-        <Group justify="space-between" px="md">
-          <div>
-            <Title order={2} fw={800} c="white">🌾 Farming Airdrop Game</Title>
-            <Text size="sm" c="gray">Play • Earn • Claim</Text>
-          </div>
-
-          <Group>
-            <Badge size="lg" color="yellow">💰 {coins}</Badge>
-            <Badge size="lg" color="teal">✨ {airdropPoints}</Badge>
-
-            <Button radius="xl" style={gradientButtonStyle} onClick={openLootboard}>
-              🎁 Mở Mystery Box
-            </Button>
-          </Group>
-        </Group>
-      </HeroBox>
-
-      {/* ---------------- MAIN GRID ---------------- */}
-      <Grid gutter="xl">
-
-        {/* LEFT FARM */}
-        <Grid.Col span={{ base: 12, md: 7 }}>
-          <FarmPlotCard>
-            <Group justify="space-between" mb="sm">
-              <Title order={4} c="white"> Khu trồng trọt</Title>
-              <Button color="green" size="sm" onClick={harvestAll}>🌾 Harvest All</Button>
+      {/* ---------------- WELCOME MODAL ---------------- */}
+      <Modal
+        opened={showWelcomeModal}
+        onClose={handleWelcomeClose}
+        centered
+        size="lg"
+        title={
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.3 }}
+          >
+            <Group gap="sm">
+              <Text size="xl">🌾</Text>
+              <Title order={3} c="#22c55e">Hướng dẫn chơi game</Title>
             </Group>
-
-            <SimpleGrid cols={{ base: 2, sm: 3 }} spacing="lg">
-              {plots.map((p: Plot | null, i: number) => {
-                const def = p ? SEED_DEFINITIONS[p.seedId] : null;
-                const ready = p && Date.now() >= p.readyAt;
-                const progress = plotProgress(p);
-
-                return (
-                  <div key={i}>
-                    <FarmTile
-                      seed={def ? { id: def.id, image: def.img, name: def.name, emoji: def.emoji } : null}
-                      index={i}
-                      ready={!!ready}
-                      onPlant={() => p ? harvest(i) : openSelectPlantModal(i)}
+          </motion.div>
+        }
+        styles={{
+          content: {
+            background: "linear-gradient(135deg, #0f2027 0%, #1a3a2e 50%, #2d5a3d 100%)",
+            border: "2px solid rgba(144, 238, 144, 0.3)",
+            boxShadow: "0 8px 32px rgba(34, 139, 34, 0.3)",
+          },
+          header: {
+            background: "rgba(34, 197, 94, 0.1)",
+            borderBottom: "2px solid rgba(144, 238, 144, 0.2)",
+          },
+          body: {
+            padding: "24px",
+          },
+        }}
+      >
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={welcomeStep}
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
+          >
+            <Stack gap="lg">
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                <Title order={4} c="#22c55e" ta="center" fw={700}>
+                  {welcomeSteps[welcomeStep].title}
+                </Title>
+              </motion.div>
+              
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: 0.1 }}
+              >
+                <Card
+                  p="lg"
+                  style={{
+                    background: "rgba(34, 197, 94, 0.1)",
+                    border: "1px solid rgba(144, 238, 144, 0.3)",
+                    borderRadius: 12,
+                  }}
+                >
+                  <Text size="md" c="#d1fae5" style={{ whiteSpace: "pre-line" }} ta="center" lh={1.8}>
+                    {welcomeSteps[welcomeStep].content}
+                  </Text>
+                </Card>
+              </motion.div>
+              
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.3, delay: 0.2 }}
+              >
+                <Stepper
+                  active={welcomeStep}
+                  onStepClick={setWelcomeStep}
+                  color="#22c55e"
+                  size="sm"
+                  styles={{
+                    stepBody: {
+                      cursor: "pointer",
+                    },
+                    step: {
+                      "&[data-progress]": {
+                        borderColor: "#22c55e",
+                      },
+                    },
+                  }}
+                >
+                  {welcomeSteps.map((_, index) => (
+                    <Stepper.Step 
+                      key={index} 
+                      label={`Bước ${index + 1}`}
+                      icon={index === welcomeStep ? "🌱" : index < welcomeStep ? "✅" : "⭕"}
                     />
+                  ))}
+                </Stepper>
+              </motion.div>
 
-                    <Text size="xs" mt={6} c="gray">
-                      {p ? (ready ? "✅ Sẵn sàng" : `${def?.emoji} Đang lớn`) : "Trống"}
-                    </Text>
-
-                    {p && (
-                      <Progress
-                        mt={5}
-                        radius="xl"
-                        size="sm"
-                        value={progress}
-                        color={ready ? "teal" : "blue"}
-                      />
-                    )}
-                  </div>
-                );
-              })}
-            </SimpleGrid>
-          </FarmPlotCard>
-        </Grid.Col>
-
-        {/* RIGHT PANEL */}
-        <Grid.Col span={{ base: 12, md: 5 }}>
-          <Stack>
-
-            {/* SHOP */}
-            <SectionCard>
-              <Title order={5} c="white">🛒 Cửa hàng</Title>
-
-              <Select
-                label="Chọn hạt"
-                value={selectedSeed}
-                onChange={(v) => v && setSelectedSeed(v)}
-                data={Object.values(SEED_DEFINITIONS).map((s) => ({
-                  value: s.id,
-                  label: `${s.emoji} ${s.name} — ${s.price} Coins`,
-                }))}
-                my="md"
-              />
-
-              <Group>
-                <Button style={gradientButtonStyle} onClick={() => buySeed(selectedSeed, 1)}>Mua 1</Button>
-                <Button variant="outline" onClick={() => buySeed(selectedSeed, 5)}>Mua 5</Button>
-                <Button variant="outline" onClick={() => buySeed(selectedSeed, 10)}>Mua 10</Button>
-              </Group>
-            </SectionCard>
-
-            {/* INVENTORY */}
-            <SectionCard>
-              <Title order={6} c="white">📦 Túi đồ</Title>
-
-              <SimpleGrid cols={2} mt="md">
-                {Object.values(SEED_DEFINITIONS).map((sd) => (
-                  <Card
-                    key={sd.id}
-                    p="sm"
-                    component={motion.div}
-                    whileHover={{ scale: 1.04 }}
-                    style={{
-                      border: "1px solid rgba(255,255,255,0.15)",
-                      background: "rgba(255,255,255,0.03)",
+              <Group justify="space-between" mt="md">
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <Button
+                    variant="subtle"
+                    onClick={handleWelcomeClose}
+                    style={{ 
+                      color: "rgba(255,255,255,0.7)",
+                      "&:hover": {
+                        background: "rgba(255,255,255,0.1)",
+                      },
                     }}
                   >
-                    <Group>
-                      <Image src={sd.img} width={42} />
-                      <div>
-                        <Text fw={700}>{sd.emoji} {sd.name}</Text>
-                        <Text size="xs" c="gray">Stock: {inventory[sd.id] ?? 0}</Text>
-                      </div>
-                    </Group>
+                    Đóng
+                  </Button>
+                </motion.div>
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <Button
+                    style={gradientButtonStyle}
+                    onClick={handleWelcomeNext}
+                    radius="xl"
+                    size="md"
+                  >
+                    {welcomeStep < welcomeSteps.length - 1 ? "Tiếp theo →" : "Bắt đầu chơi! 🎮"}
+                  </Button>
+                </motion.div>
+              </Group>
+            </Stack>
+          </motion.div>
+        </AnimatePresence>
+      </Modal>
 
-                    <Button
-                      mt="xs"
-                      size="xs"
-                      disabled={(inventory[sd.id] ?? 0) <= 0}
-                      onClick={() => {
-                        const empty = plots.findIndex((p: Plot | null) => !p);
-                        if (empty === -1) return showNotification({ color: "orange", title: "Không còn ô trống!", message: "" });
+      {/* ---------------- HERO ---------------- */}
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: "easeOut" }}
+      >
+        <HeroBox>
+          <Group justify="space-between" px="md">
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+            >
+              <Title order={2} fw={800} c="white">🌾 Farming Airdrop Game</Title>
+              <Text size="sm" c="gray">Play • Earn • Claim</Text>
+            </motion.div>
 
-                        setActivePlotIndex(empty);
-                        confirmPlant(sd.id);
+            <Group gap="md">
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                transition={{ type: "spring", stiffness: 400, damping: 17 }}
+              >
+                <Badge 
+                  size="lg" 
+                  style={{ 
+                    fontSize: "1rem", 
+                    padding: "8px 16px",
+                    background: "linear-gradient(135deg, #fbbf24, #f59e0b)",
+                    color: "#1a1a1a",
+                    fontWeight: 700,
+                  }}
+                >
+                  💰 {coins}
+                </Badge>
+              </motion.div>
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                transition={{ type: "spring", stiffness: 400, damping: 17 }}
+              >
+                <Badge 
+                  size="lg" 
+                  style={{ 
+                    fontSize: "1rem", 
+                    padding: "8px 16px",
+                    background: "linear-gradient(135deg, #10b981, #059669)",
+                    color: "#fff",
+                    fontWeight: 700,
+                  }}
+                >
+                  ✨ {airdropPoints}
+                </Badge>
+              </motion.div>
+
+              <motion.div
+                whileHover={{ scale: 1.05, boxShadow: "0 0 20px rgba(245, 158, 11, 0.6)" }}
+                whileTap={{ scale: 0.95 }}
+                transition={{ type: "spring", stiffness: 400, damping: 17 }}
+              >
+                <Button radius="xl" style={helpButtonStyle} onClick={() => setShowWelcomeModal(true)}>
+                  📖 Hướng dẫn
+                </Button>
+              </motion.div>
+
+              <motion.div
+                whileHover={{ scale: 1.05, boxShadow: "0 0 20px rgba(34, 197, 94, 0.6)" }}
+                whileTap={{ scale: 0.95 }}
+                transition={{ type: "spring", stiffness: 400, damping: 17 }}
+              >
+                <Button radius="xl" style={gradientButtonStyle} onClick={openLootboard}>
+                  🎁 Mystery Box
+                </Button>
+              </motion.div>
+            </Group>
+          </Group>
+        </HeroBox>
+      </motion.div>
+
+      {/* ---------------- MAIN GRID ---------------- */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5, delay: 0.2 }}
+      >
+        <Grid gutter="xl">
+          {/* LEFT FARM */}
+          <Grid.Col span={{ base: 12, md: 7 }}>
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.5, delay: 0.3 }}
+            >
+              <FarmPlotCard>
+                <Group justify="space-between" mb="sm">
+                  <Title order={4} c="white">🪴 Khu trồng trọt</Title>
+                  <motion.div
+                    whileHover={{ scale: 1.05, boxShadow: "0 0 15px rgba(34, 197, 94, 0.5)" }}
+                    whileTap={{ scale: 0.95 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                  >
+                    <Button 
+                      size="sm" 
+                      onClick={harvestAll}
+                      style={{
+                        background: "linear-gradient(135deg, #22c55e, #16a34a)",
+                        boxShadow: "0 4px 15px rgba(34, 197, 94, 0.3)",
                       }}
                     >
-                      Trồng
+                      🌾 Thu hoạch tất cả
                     </Button>
-                  </Card>
-                ))}
-              </SimpleGrid>
-            </SectionCard>
-          </Stack>
-        </Grid.Col>
-      </Grid>
+                  </motion.div>
+                </Group>
+
+                <SimpleGrid cols={{ base: 2, sm: 3 }} spacing="lg">
+                  {plots.map((p: Plot | null, i: number) => {
+                    const def = p ? SEED_DEFINITIONS[p.seedId] : null;
+                    const ready = p && Date.now() >= p.readyAt;
+                    const progress = plotProgress(p);
+
+                    return (
+                      <motion.div
+                        key={i}
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ duration: 0.3, delay: i * 0.05 }}
+                        whileHover={{ scale: 1.02 }}
+                      >
+                        <FarmTile
+                          seed={def ? { id: def.id, image: def.img, name: def.name, emoji: def.emoji } : null}
+                          index={i}
+                          ready={!!ready}
+                          onPlant={() => p ? harvest(i) : openSelectPlantModal(i)}
+                        />
+
+                        <motion.div
+                          animate={ready ? { scale: [1, 1.05, 1] } : {}}
+                          transition={{ duration: 1, repeat: ready ? Infinity : 0 }}
+                        >
+                          <Text size="xs" mt={6} c="gray" ta="center">
+                            {p ? (ready ? "✅ Sẵn sàng" : `${def?.emoji} Đang lớn`) : "Trống"}
+                          </Text>
+                        </motion.div>
+
+                        {p && (
+                          <motion.div
+                            initial={{ width: 0 }}
+                            animate={{ width: "100%" }}
+                            transition={{ duration: 0.3 }}
+                          >
+                            <Progress
+                              mt={5}
+                              radius="xl"
+                              size="sm"
+                              value={progress}
+                              color={ready ? "teal" : "blue"}
+                              animated={!ready}
+                            />
+                          </motion.div>
+                        )}
+                      </motion.div>
+                    );
+                  })}
+                </SimpleGrid>
+              </FarmPlotCard>
+            </motion.div>
+          </Grid.Col>
+
+          {/* RIGHT PANEL */}
+          <Grid.Col span={{ base: 12, md: 5 }}>
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.5, delay: 0.4 }}
+            >
+              <Stack gap="lg">
+                {/* SHOP */}
+                <motion.div
+                  whileHover={{ y: -2 }}
+                  transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                >
+                  <SectionCard>
+                    <Title order={5} c="white">🛒 Cửa hàng</Title>
+
+                    <Select
+                      label="Chọn hạt"
+                      value={selectedSeed}
+                      onChange={(v) => v && setSelectedSeed(v)}
+                      data={Object.values(SEED_DEFINITIONS).map((s) => ({
+                        value: s.id,
+                        label: `${s.emoji} ${s.name} — ${s.price} Coins`,
+                      }))}
+                      my="md"
+                    />
+
+                    <Group gap="sm">
+                      <motion.div
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                      >
+                        <Button style={gradientButtonStyle} onClick={() => buySeed(selectedSeed, 1)}>
+                          Mua 1
+                        </Button>
+                      </motion.div>
+                      <motion.div
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                      >
+                        <Button variant="outline" onClick={() => buySeed(selectedSeed, 5)}>
+                          Mua 5
+                        </Button>
+                      </motion.div>
+                      <motion.div
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                      >
+                        <Button variant="outline" onClick={() => buySeed(selectedSeed, 10)}>
+                          Mua 10
+                        </Button>
+                      </motion.div>
+                    </Group>
+                  </SectionCard>
+                </motion.div>
+
+                {/* INVENTORY */}
+                <motion.div
+                  whileHover={{ y: -2 }}
+                  transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                >
+                  <SectionCard>
+                    <Title order={6} c="white">📦 Túi đồ</Title>
+
+                    <SimpleGrid cols={2} mt="md" spacing="sm">
+                      {Object.values(SEED_DEFINITIONS).map((sd, idx) => (
+                        <motion.div
+                          key={sd.id}
+                          initial={{ opacity: 0, scale: 0.9 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          transition={{ duration: 0.3, delay: 0.5 + idx * 0.1 }}
+                          whileHover={{ scale: 1.05, y: -4 }}
+                          whileTap={{ scale: 0.95 }}
+                        >
+                          <Card
+                            p="sm"
+                            style={{
+                              border: "1px solid rgba(255,255,255,0.15)",
+                              background: "rgba(255,255,255,0.03)",
+                              transition: "all 0.3s ease",
+                            }}
+                          >
+                            <Group gap="xs">
+                              <motion.div
+                                whileHover={{ rotate: [0, -10, 10, -10, 0] }}
+                                transition={{ duration: 0.5 }}
+                              >
+                                <Image src={sd.img} width={42} alt={sd.name} />
+                              </motion.div>
+                              <div style={{ flex: 1 }}>
+                                <Text fw={700} size="sm">{sd.emoji} {sd.name}</Text>
+                                <Text size="xs" c="gray">Hiện có: {inventory[sd.id] ?? 0}</Text>
+                              </div>
+                            </Group>
+
+                            <motion.div
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                            >
+                              <Button
+                                mt="xs"
+                                size="xs"
+                                fullWidth
+                                disabled={(inventory[sd.id] ?? 0) <= 0}
+                                style={gradientButtonStyle}
+                                onClick={() => {
+                                  const empty = plots.findIndex((p: Plot | null) => !p);
+                                  if (empty === -1) {
+                                    showNotification({ 
+                                      color: "orange", 
+                                      title: "Không còn ô trống!", 
+                                      message: "Hãy thu hoạch cây hiện có để giải phóng ô" 
+                                    });
+                                    return;
+                                  }
+
+                                  setActivePlotIndex(empty);
+                                  confirmPlant(sd.id);
+                                }}
+                              >
+                                Trồng
+                              </Button>
+                            </motion.div>
+                          </Card>
+                        </motion.div>
+                      ))}
+                    </SimpleGrid>
+                  </SectionCard>
+                </motion.div>
+              </Stack>
+            </motion.div>
+          </Grid.Col>
+        </Grid>
+      </motion.div>
 
       {/* ---------------- PLANT MODAL ---------------- */}
       <Modal
@@ -596,26 +969,57 @@ export default function GamePage() {
       <AnimatePresence>
         {effectPopup && (
           <motion.div
-            initial={{ opacity: 0, y: -40 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -40 }}
+            initial={{ opacity: 0, y: -40, scale: 0.8 }}
+            animate={{ 
+              opacity: 1, 
+              y: 0, 
+              scale: 1,
+              boxShadow: `0 0 30px ${effectPopup.quality.color}40`,
+            }}
+            exit={{ opacity: 0, y: -40, scale: 0.8 }}
+            transition={{ 
+              type: "spring",
+              stiffness: 300,
+              damping: 25,
+            }}
             style={{
               position: "fixed",
               right: 20,
               top: 20,
-              padding: 16,
-              background: "#0b1220",
-              borderRadius: 12,
+              padding: 20,
+              background: "linear-gradient(135deg, #0f2027, #1a3a2e)",
+              borderRadius: 16,
               color: "#fff",
-              border: `1px solid ${effectPopup.quality.color}`,
+              border: `2px solid ${effectPopup.quality.color}`,
               zIndex: 2000,
+              minWidth: 200,
+              boxShadow: `0 8px 32px ${effectPopup.quality.color}40`,
             }}
           >
-            <Title order={5} c={effectPopup.quality.color}>
-              {effectPopup.quality.icon} {effectPopup.quality.label}
-            </Title>
-            <Text>💰 +{effectPopup.coins} Coins</Text>
-            <Text>✨ +{effectPopup.totalAP} AP</Text>
+            <motion.div
+              animate={{ scale: [1, 1.1, 1] }}
+              transition={{ duration: 0.5, repeat: 1 }}
+            >
+              <Title order={5} c={effectPopup.quality.color} mb="xs">
+                {effectPopup.quality.icon} {effectPopup.quality.label}
+              </Title>
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.2 }}
+            >
+              <Text size="lg" fw={600}>💰 +{effectPopup.coins} Coins</Text>
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.3 }}
+            >
+              <Text size="lg" fw={600} c={effectPopup.quality.color}>
+                ✨ +{effectPopup.totalAP} AP
+              </Text>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -623,32 +1027,75 @@ export default function GamePage() {
       <AnimatePresence>
         {harvestAllPopup && (
           <motion.div
-            initial={{ opacity: 0, scale: 0.85 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0 }}
+            initial={{ opacity: 0, scale: 0.8, y: -20 }}
+            animate={{ 
+              opacity: 1, 
+              scale: 1, 
+              y: 0,
+              boxShadow: "0 0 40px rgba(77, 225, 255, 0.4)",
+            }}
+            exit={{ opacity: 0, scale: 0.8, y: -20 }}
+            transition={{ 
+              type: "spring",
+              stiffness: 300,
+              damping: 25,
+            }}
             style={{
               position: "fixed",
               left: "50%",
               top: 20,
               transform: "translateX(-50%)",
-              background: "#0c1725",
+              background: "linear-gradient(135deg, #0f2027, #1a3a2e, #2d5a3d)",
               color: "white",
-              padding: 20,
-              borderRadius: 12,
+              padding: 24,
+              borderRadius: 16,
               zIndex: 2000,
-              border: "1px solid #4de1ff",
+              border: "2px solid #22c55e",
+              minWidth: 300,
+              maxWidth: 400,
+              boxShadow: "0 8px 32px rgba(34, 197, 94, 0.4)",
             }}
           >
-            <Title order={4}>🌾 Harvest All!</Title>
-            <Text fw={700} mt={4}>💰 {harvestAllPopup.coins} Coins — ✨ {harvestAllPopup.ap} AP</Text>
+            <motion.div
+              animate={{ scale: [1, 1.1, 1], rotate: [0, 5, -5, 0] }}
+              transition={{ duration: 0.6 }}
+            >
+              <Title order={4} ta="center" mb="md">🌾 Harvest All!</Title>
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+            >
+              <Text fw={700} size="xl" ta="center" mb="md">
+                💰 {harvestAllPopup.coins} Coins — ✨ {harvestAllPopup.ap} AP
+              </Text>
+            </motion.div>
 
-            {harvestAllPopup.list.slice(0, 3).map((x: HarvestDetail, i: number) => (
-              <Text key={i} size="xs">{x.emoji} {x.name} +{x.bonus} ({x.quality})</Text>
-            ))}
+            <Stack gap="xs" mt="md">
+              {harvestAllPopup.list.slice(0, 3).map((x: HarvestDetail, i: number) => (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.3 + i * 0.1 }}
+                >
+                  <Text size="sm">{x.emoji} {x.name} +{x.bonus} ({x.quality})</Text>
+                </motion.div>
+              ))}
 
-            {harvestAllPopup.list.length > 3 && (
-              <Text size="xs" c="gray">...và {harvestAllPopup.list.length - 3} cây khác</Text>
-            )}
+              {harvestAllPopup.list.length > 3 && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.6 }}
+                >
+                  <Text size="sm" c="gray" ta="center" mt="xs">
+                    ...và {harvestAllPopup.list.length - 3} cây khác
+                  </Text>
+                </motion.div>
+              )}
+            </Stack>
           </motion.div>
         )}
       </AnimatePresence>

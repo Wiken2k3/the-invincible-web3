@@ -8,14 +8,20 @@ import game from "../assets/game.png";
 /* ===================== 🎨 THEME (MATCH FARM TILE) ===================== */
 
 const theme = {
-  bg: "#050B18",
-  glassBg: "rgba(255,255,255,0.05)",
-  glassBorder: "rgba(255,255,255,0.12)",
-  activeBorder: "rgba(0,229,255,0.55)",
-  glow: "rgba(0,229,255,0.35)",
-  primary: "#00E5FF",
+  bg: `
+    radial-gradient(circle at 20% 30%, rgba(14, 165, 233, 0.08) 0%, transparent 50%),
+    radial-gradient(circle at 80% 70%, rgba(34, 197, 94, 0.06) 0%, transparent 50%),
+    radial-gradient(circle at 50% 10%, rgba(245, 158, 11, 0.05) 0%, transparent 40%),
+    linear-gradient(180deg, #0a0f1a 0%, #0f172a 50%, #1a1f2e 100%)
+  `,
+  glassBg: "rgba(34, 197, 94, 0.08)",
+  glassBorder: "rgba(144, 238, 144, 0.25)",
+  activeBorder: "rgba(34, 197, 94, 0.5)",
+  glow: "rgba(34, 197, 94, 0.3)",
+  primary: "#22c55e",
+  sun: "#f59e0b",
   text: "#FFFFFF",
-  textMuted: "rgba(255,255,255,0.65)",
+  textMuted: "rgba(209, 250, 229, 0.8)",
 };
 
 /* ===================== MAIN ===================== */
@@ -39,15 +45,39 @@ export default function Home() {
 
 const BackgroundGlow = () => (
   <>
+    {/* Glow xanh lá (cây cỏ) - nhẹ nhàng */}
     <motion.div
-      animate={{ opacity: [0.25, 0.45, 0.25], scale: [1, 1.2, 1] }}
-      transition={{ duration: 16, repeat: Infinity }}
-      style={styles.bgGlowTop as React.CSSProperties}
+      animate={{ opacity: [0.1, 0.2, 0.1], scale: [1, 1.2, 1] }}
+      transition={{ duration: 16, repeat: Infinity, ease: "easeInOut" }}
+      style={{
+        ...styles.bgGlowTop,
+        background: "radial-gradient(circle, rgba(34, 197, 94, 0.12), transparent 70%)",
+      } as React.CSSProperties}
     />
+    {/* Glow nước (water) */}
     <motion.div
-      animate={{ opacity: [0.2, 0.4, 0.2], scale: [1, 1.3, 1] }}
-      transition={{ duration: 18, repeat: Infinity }}
-      style={styles.bgGlowBottom as React.CSSProperties}
+      animate={{ opacity: [0.08, 0.15, 0.08], scale: [1, 1.3, 1] }}
+      transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}
+      style={{
+        ...styles.bgGlowBottom,
+        background: "radial-gradient(circle, rgba(14, 165, 233, 0.1), transparent 70%)",
+      } as React.CSSProperties}
+    />
+    {/* Glow mặt trời (sun) - nhẹ */}
+    <motion.div
+      animate={{ opacity: [0.05, 0.12, 0.05], scale: [1, 1.1, 1] }}
+      transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
+      style={{
+        position: "fixed" as const,
+        width: 400,
+        height: 400,
+        background: "radial-gradient(circle, rgba(245, 158, 11, 0.1), transparent 70%)",
+        borderRadius: "50%",
+        filter: "blur(120px)",
+        top: "10%",
+        right: "10%",
+        zIndex: -1,
+      }}
     />
   </>
 );
@@ -213,13 +243,19 @@ interface PrimaryButtonProps {
 }
 
 const PrimaryButton = ({ children, full, to }: PrimaryButtonProps) => (
-  <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.96 }}>
+  <motion.div 
+    whileHover={{ scale: 1.05, boxShadow: `0 8px 24px ${theme.glow}` }} 
+    whileTap={{ scale: 0.96 }}
+    transition={{ type: "spring", stiffness: 400, damping: 17 }}
+  >
     <Link
       to={to}
       style={{
         ...styles.button,
         width: full ? "100%" : "auto",
         textAlign: "center" as const,
+        background: `linear-gradient(135deg, ${theme.primary}, #16a34a)`,
+        boxShadow: `0 4px 15px ${theme.glow}`,
       }}
     >
       {children}
@@ -270,6 +306,7 @@ const styles = {
     borderRadius: 20,
     padding: 28,
     backdropFilter: "blur(18px)",
+    boxShadow: "0 4px 20px rgba(34, 197, 94, 0.1)",
   },
   cardTitle: { fontSize: "1.25rem", marginBottom: 12 },
   cardDesc: { color: theme.textMuted },
@@ -302,7 +339,6 @@ const styles = {
     position: "fixed" as const,
     width: 600,
     height: 600,
-    background: theme.glow,
     borderRadius: "50%",
     filter: "blur(160px)",
     top: "-10%",
@@ -313,7 +349,6 @@ const styles = {
     position: "fixed" as const,
     width: 500,
     height: 500,
-    background: theme.glow,
     borderRadius: "50%",
     filter: "blur(180px)",
     bottom: "-10%",
