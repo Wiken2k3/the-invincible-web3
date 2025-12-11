@@ -14,7 +14,7 @@ import { useEffect } from "react";
 import logoImg from "../assets/logo.png";
 
 /* =========================
-   🎨 THEME CONFIG (Sui-like)
+   🎨 THEME CONFIG
 ========================= */
 const UI = {
   gradient: "linear-gradient(135deg,#A259FF,#00E5FF)",
@@ -30,27 +30,18 @@ export default function MainLayout() {
   const [opened, { toggle, close }] = useDisclosure();
   const { pathname } = useLocation();
 
-  // Tự động đóng sidebar khi chuyển route trên mobile
-  useEffect(() => {
-    if (opened && window.innerWidth < 768) {
-      // Delay nhỏ để animation mượt hơn
-      const timer = setTimeout(() => {
-        close();
-      }, 200);
-      return () => clearTimeout(timer);
-    }
-  }, [pathname, opened, close]);
-
-  // Lắng nghe event để đóng sidebar từ NavItem
+  /* 
+    🎯 CHỈ FIX GỌN LẠI:
+    - Không auto close khi đổi route (không cần thiết)
+    - Chỉ đóng sidebar khi NavItem click
+  */
   useEffect(() => {
     const handleCloseSidebar = () => {
-      if (opened && window.innerWidth < 768) {
-        close();
-      }
+      if (window.innerWidth < 768) close();
     };
-    window.addEventListener('closeSidebar', handleCloseSidebar);
-    return () => window.removeEventListener('closeSidebar', handleCloseSidebar);
-  }, [opened, close]);
+    window.addEventListener("closeSidebar", handleCloseSidebar);
+    return () => window.removeEventListener("closeSidebar", handleCloseSidebar);
+  }, [close]);
 
   return (
     <AppShell
@@ -79,7 +70,7 @@ export default function MainLayout() {
           background: "rgba(15, 23, 42, 0.85)",
           borderBottom: "1px solid rgba(14, 165, 233, 0.2)",
           boxShadow: "0 4px 20px rgba(14, 165, 233, 0.1)",
-        } as React.CSSProperties}
+        }}
       >
         <Group h="100%" px="md" justify="space-between">
           <Group gap="sm">
@@ -90,7 +81,6 @@ export default function MainLayout() {
             </Group>
           </Group>
 
-          {/* Wallet button - Màu mặt trời */}
           <motion.div
             whileHover={{ scale: 1.05, boxShadow: "0 0 24px rgba(245, 158, 11, 0.5)" }}
             whileTap={{ scale: 0.95 }}
@@ -104,7 +94,7 @@ export default function MainLayout() {
                 boxShadow: "0 4px 16px rgba(245, 158, 11, 0.4)",
                 color: "#fff",
                 fontWeight: 700,
-              } as React.CSSProperties}
+              }}
             >
               ☀️ Connect Wallet
             </Button>
@@ -126,7 +116,7 @@ export default function MainLayout() {
           `,
           borderRight: "2px solid rgba(160, 82, 45, 0.3)",
           boxShadow: "4px 0 20px rgba(139, 69, 19, 0.15)",
-        } as React.CSSProperties}
+        }}
       >
         <Divider opacity={0.06} mb="sm" />
 
@@ -143,11 +133,10 @@ export default function MainLayout() {
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
-            transition={{ 
+            transition={{
               duration: 0.25,
-              ease: [0.4, 0, 0.2, 1] // Custom easing cho mượt hơn
+              ease: [0.4, 0, 0.2, 1],
             }}
-            style={{} as React.CSSProperties}
           >
             <Outlet />
           </motion.div>
@@ -160,6 +149,7 @@ export default function MainLayout() {
 /* =========================
    🌟 NAV ITEM
 ========================= */
+
 type NavItemProps = {
   label: string;
   to: string;
@@ -168,13 +158,8 @@ type NavItemProps = {
 
 function NavItem({ label, to, active }: NavItemProps) {
   const handleClick = () => {
-    // Đóng sidebar trên mobile khi click vào menu item
     if (window.innerWidth < 768) {
-      // Delay nhỏ để animation mượt hơn
-      setTimeout(() => {
-        const event = new Event('closeSidebar');
-        window.dispatchEvent(event);
-      }, 150);
+      window.dispatchEvent(new Event("closeSidebar"));
     }
   };
 
@@ -182,11 +167,7 @@ function NavItem({ label, to, active }: NavItemProps) {
     <motion.div
       whileHover={{ x: 6 }}
       whileTap={{ scale: 0.98 }}
-      transition={{
-        type: "spring",
-        stiffness: 400,
-        damping: 25
-      }}
+      transition={{ type: "spring", stiffness: 400, damping: 25 }}
     >
       <NavLink
         component={Link}
@@ -205,8 +186,9 @@ function NavItem({ label, to, active }: NavItemProps) {
               ? "linear-gradient(90deg, rgba(34, 197, 94, 0.2), rgba(22, 163, 74, 0.15))"
               : "transparent",
             transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-            position: "relative" as const,
-            overflow: "hidden" as const,
+            position: "relative",
+            overflow: "hidden",
+
             "&::before": active
               ? {
                   content: '""',
@@ -220,6 +202,7 @@ function NavItem({ label, to, active }: NavItemProps) {
                   boxShadow: "0 0 10px rgba(34, 197, 94, 0.4)",
                 }
               : {},
+
             "&:hover": {
               background: active
                 ? "linear-gradient(90deg, rgba(34, 197, 94, 0.3), rgba(22, 163, 74, 0.25))"
