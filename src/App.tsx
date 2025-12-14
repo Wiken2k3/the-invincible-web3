@@ -4,7 +4,7 @@ import MainLayout from "./layout/MainLayout";
 import "react-toastify/dist/ReactToastify.css";
 import Home from "./pages/Home";
 import Game from "./pages/Game";
-import Reward from "./pages/Reward";
+// import Reward from "./pages/Reward";
 
 export default function App() {
   return (
@@ -13,7 +13,7 @@ export default function App() {
         <Route element={<MainLayout />}>
           <Route path="/" element={<Home />} />
           <Route path="/game" element={<Game />} />
-          <Route path="/reward" element={<Reward />} />
+          {/* <Route path="/reward" element={<Reward />} /> */}
         </Route>
       </Routes>
     </BrowserRouter>
