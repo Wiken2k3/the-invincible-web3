@@ -1,10 +1,10 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import MainLayout from "./layout/MainLayout";
-// import { ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
-import Home from "./pages/Home";
-import Game from "./pages/Game";
-// import Reward from "./pages/Reward";
+import Home from "./pages/Home/Home";
+import Reward from "./pages/Reward/Reward";
+
+import GameHub from "./pages/GameHub/GameHub";
+import { games } from "./pages/GameHub/games.config";
 
 export default function App() {
   return (
@@ -12,8 +12,17 @@ export default function App() {
       <Routes>
         <Route element={<MainLayout />}>
           <Route path="/" element={<Home />} />
-          <Route path="/game" element={<Game />} />
-          {/* <Route path="/reward" element={<Reward />} /> */}
+          <Route path="/game" element={<GameHub />} />
+          <Route path="/reward" element={<Reward />} />
+
+          {/* AUTO GAME ROUTES */}
+          {games.map((game) => (
+            <Route
+              key={game.key}
+              path={game.path}
+              element={<game.component />}
+            />
+          ))}
         </Route>
       </Routes>
     </BrowserRouter>
