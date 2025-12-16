@@ -464,6 +464,8 @@ const ResultCard = styled(Paper)<{ $result: GameResult }>`
   box-shadow: ${({ $result }) => $result === "win" 
     ? "0 0 30px rgba(34, 197, 94, 0.3)" 
     : "0 0 30px rgba(239, 68, 68, 0.3)"};
+  padding: 2rem;
+  border-radius: 18px;
 `;
 
 const ConfettiPiece = styled.div<{ $delay: number; $x: number; $color: string }>`
@@ -832,18 +834,10 @@ export function CoinFlipModal({ opened, close, userBalance = 100, onTransaction 
           ta="center" 
           mb="xl" 
           p="md" 
-          radius="16px"
-          sx={{
+          style={{
             background: "linear-gradient(135deg, rgba(168, 85, 247, 0.15), rgba(56, 189, 248, 0.08))",
             border: "2px solid rgba(168, 85, 247, 0.3)",
-            '@media (max-width: 768px)': {
-              padding: '1rem',
-              marginBottom: '1rem',
-            },
-            '@media (max-width: 480px)': {
-              padding: '0.75rem',
-              marginBottom: '0.75rem',
-            },
+            borderRadius: "16px",
           }}
         >
           <Text size="sm" c="dimmed" fw={700} mb="sm">
@@ -852,14 +846,6 @@ export function CoinFlipModal({ opened, close, userBalance = 100, onTransaction 
           <Group 
             justify="center" 
             gap="lg"
-            sx={{
-              '@media (max-width: 768px)': {
-                gap: 'md',
-              },
-              '@media (max-width: 480px)': {
-                gap: 'xs',
-              },
-            }}
           >
             <div>
               <Text size="xs" c="dimmed" fw={600}>Your Bet</Text>
@@ -907,7 +893,7 @@ export function CoinFlipModal({ opened, close, userBalance = 100, onTransaction 
                 title="Choose Heads"
               >
                 <Text size="4rem">👑</Text>
-                  <Text fw={900} c="white" size="lg" sx={{ '@media (max-width: 480px)': { fontSize: '0.9rem' } }}>HEADS</Text>
+                  <Text fw={900} c="white" size="lg">HEADS</Text>
               </SideButton>
               <SideButton 
                 $selected={selectedSide === "tails"} 
@@ -916,7 +902,7 @@ export function CoinFlipModal({ opened, close, userBalance = 100, onTransaction 
                 title="Choose Tails"
               >
                 <Text size="4rem">🌊</Text>
-                  <Text fw={900} c="white" size="lg" sx={{ '@media (max-width: 480px)': { fontSize: '0.9rem' } }}>TAILS</Text>
+                  <Text fw={900} c="white" size="lg">TAILS</Text>
               </SideButton>
             </Group>
             <FlipButton 
@@ -948,10 +934,15 @@ export function CoinFlipModal({ opened, close, userBalance = 100, onTransaction 
         {/* Result Display */}
         {gameState === "result" && (
           <Stack gap="lg">
-            <ResultCard 
-              $result={gameResult} 
-              p="2rem" 
+            <Paper 
+              p="2rem"
               radius="18px"
+              style={{
+                border: `4px solid ${gameResult === "win" ? "#22c55e" : "#ef4444"}`,
+                background: `linear-gradient(135deg, ${gameResult === "win" ? "rgba(34, 197, 94, 0.1)" : "rgba(239, 68, 68, 0.1)"}, rgba(51, 65, 85, 0.6))`,
+                boxShadow: gameResult === "win" ? "0 0 30px rgba(34, 197, 94, 0.3)" : "0 0 30px rgba(239, 68, 68, 0.3)",
+                animation: `resultPop 0.7s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards`,
+              }}
             >
               <Stack align="center" gap="lg">
                 <Text size="6rem" fw={900}>
@@ -979,7 +970,7 @@ export function CoinFlipModal({ opened, close, userBalance = 100, onTransaction 
                   {gameResult === "win" ? "🎉 YOU WON!" : "Try Again!"}
                 </Text>
               </Stack>
-            </ResultCard>
+            </Paper>
             <Button 
               onClick={handlePlayAgain} 
               fullWidth 

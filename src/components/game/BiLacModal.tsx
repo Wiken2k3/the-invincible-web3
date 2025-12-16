@@ -11,9 +11,10 @@ import {
     Grid,
     NumberInput,
     Card,
-    Alert, // Dùng để hiển thị thông báo
+    Alert,
+    Badge,
 } from "@mantine/core";
-import { IconChevronRight, IconPlayerPlay, IconCoin, IconTrophy, IconAlertTriangle, IconCheck } from '@tabler/icons-react';
+import { IconChevronRight, IconPlayerPlay, IconCoin, IconTrophy, IconAlertTriangle, IconCheck, IconUserCircle } from '@tabler/icons-react';
 import { motion } from "framer-motion";
 import { useState } from "react"; 
 
