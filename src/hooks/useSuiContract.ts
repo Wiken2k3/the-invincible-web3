@@ -1,10 +1,3 @@
-/**
- * 🔥 Custom Hook để dễ dàng tương tác với Sui Smart Contract
- * 
- * Usage:
- * const { callContract, readObject, getBalance } = useSuiContract();
- */
-
 import { useCallback } from "react";
 import { 
   useCurrentAccount,
@@ -14,6 +7,7 @@ import {
 } from "@mysten/dapp-kit";
 import { Transaction } from "@mysten/sui/transactions";
 import { showNotification } from "@mantine/notifications";
+import { isValidSuiAddress } from "../config/web3";
 
 export function useSuiContract() {
   const account = useCurrentAccount();
@@ -142,6 +136,17 @@ export function useSuiContract() {
         return;
       }
 
+      // ✅ Validate recipient address
+      if (!isValidSuiAddress(recipient)) {
+        showNotification({
+          title: "Lỗi địa chỉ ví",
+          message: "Địa chỉ ví không hợp lệ. Vui lòng kiểm tra cấu hình TREASURY_ADDRESS",
+          color: "red",
+        });
+        options?.onError?.(new Error("Invalid recipient address"));
+        return;
+      }
+
       try {
         const tx = new Transaction();
         const [coin] = tx.splitCoins(tx.gas, [amount * 1e9]); // Convert to MIST
@@ -152,15 +157,15 @@ export function useSuiContract() {
           {
             onSuccess: (result) => {
               showNotification({
-                title: "Thành công",
-                message: `Đã chuyển ${amount} SUI`,
+                title: "✅ Thành công",
+                message: `Đã gửi ${amount} SUI để chơi game`,
                 color: "green",
               });
               options?.onSuccess?.(result);
             },
             onError: (error) => {
               showNotification({
-                title: "Lỗi",
+                title: "❌ Lỗi giao dịch",
                 message: error.message,
                 color: "red",
               });
@@ -171,7 +176,7 @@ export function useSuiContract() {
       } catch (error) {
         const err = error as Error;
         showNotification({
-          title: "Lỗi",
+          title: "❌ Lỗi",
           message: err.message,
           color: "red",
         });
