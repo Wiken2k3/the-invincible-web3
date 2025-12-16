@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { WHEEL_ITEMS } from "./wheel.config";
 
-export default function Wheel({ rotate }: { rotate: number }) {
+export default function Wheel({ rotate = 0 }: { rotate?: number }) {
   const sliceDeg = 360 / WHEEL_ITEMS.length;
 
   return (
