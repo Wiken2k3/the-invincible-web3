@@ -16,6 +16,7 @@ import { TREASURY_ADDRESS } from "../../../config/web3";
 
 import { generateMines } from "./mines.logic";
 import { getMultiplier } from "./mines.config";
+import { saveTx } from "../../../utils/saveTx"; // ✅ IMPORT
 
 export default function Mines() {
   const { address } = useWallet();
@@ -26,6 +27,9 @@ export default function Mines() {
   const [opened, setOpened] = useState<number[]>([]);
   const [mineSet, setMineSet] = useState<Set<number>>(new Set());
   const [playing, setPlaying] = useState(false);
+
+  // 🔥 TX DIGEST
+  const [txDigest, setTxDigest] = useState<string | undefined>();
 
   // ▶️ Start Game
   const startGame = async () => {
@@ -39,10 +43,21 @@ export default function Mines() {
     }
 
     await transferSui(TREASURY_ADDRESS, bet, {
-      onSuccess: () => {
+      onSuccess: (tx) => {
+        setTxDigest(tx?.digest);
         setMineSet(generateMines(mines));
         setOpened([]);
         setPlaying(true);
+      },
+      onError: () => {
+        // ❌ TX FAIL
+        saveTx({
+          id: crypto.randomUUID(),
+          game: "Mines",
+          amount: bet,
+          status: "failed",
+          timestamp: Date.now(),
+        });
       },
     });
   };
@@ -57,6 +72,18 @@ export default function Mines() {
         message: "Bạn đã trúng mìn!",
         color: "red",
       });
+
+      // ❌ LOSE
+      saveTx({
+        id: crypto.randomUUID(),
+        game: "Mines",
+        amount: bet,
+        status: "success",
+        result: "lose",
+        digest: txDigest,
+        timestamp: Date.now(),
+      });
+
       setPlaying(false);
       return;
     }
@@ -64,10 +91,21 @@ export default function Mines() {
     setOpened((prev) => [...prev, i]);
   };
 
-  // 💰 Cash Out
+  // 💰 Cash Out (WIN)
   const cashOut = () => {
     const multiplier = getMultiplier(opened.length, mines);
     const reward = bet * multiplier;
+
+    // ✅ WIN
+    saveTx({
+      id: crypto.randomUUID(),
+      game: "Mines",
+      amount: bet,
+      status: "success",
+      result: "win",
+      digest: txDigest,
+      timestamp: Date.now(),
+    });
 
     showNotification({
       title: "💰 CASH OUT",

@@ -15,6 +15,7 @@ import { rollDice } from "./dice.logic";
 import { useWallet } from "../../../hooks/useWallet";
 import { useSuiContract } from "../../../hooks/useSuiContract";
 import { TREASURY_ADDRESS, isValidSuiAddress } from "../../../config/web3";
+import { saveTx } from "../../../utils/saveTx"; // ✅ IMPORT THÊM
 
 type Choice = "TAI" | "XIU";
 
@@ -50,13 +51,24 @@ export default function Dice() {
     setRolling(true);
 
     await transferSui(TREASURY_ADDRESS, bet, {
-      onSuccess: () => {
-        const result = rollDice();
-        setLastRoll(result);
+      onSuccess: (result) => {
+        const roll = rollDice();
+        setLastRoll(roll);
 
-        if (result.result === choice) {
+        const isWin = roll.result === choice;
+
+        // 🔥 LƯU TRANSACTION SUCCESS
+        saveTx({
+          id: crypto.randomUUID(),
+          game: "Dice",
+          amount: bet,
+          status: "success",
+          digest: result?.digest,
+          timestamp: Date.now(),
+        });
+
+        if (isWin) {
           const reward = bet * 2;
-
           showNotification({
             title: "🎉 Thắng!",
             message: `Bạn nhận ${reward.toFixed(2)} SUI`,
@@ -72,7 +84,23 @@ export default function Dice() {
 
         setRolling(false);
       },
-      onError: () => {
+
+      onError: (error) => {
+        // 🔥 LƯU FAILED TX
+        saveTx({
+          id: crypto.randomUUID(),
+          game: "Dice",
+          amount: bet,
+          status: "failed",
+          timestamp: Date.now(),
+        });
+
+        showNotification({
+          title: "Lỗi giao dịch",
+          message: error.message,
+          color: "red",
+        });
+
         setRolling(false);
       },
     });

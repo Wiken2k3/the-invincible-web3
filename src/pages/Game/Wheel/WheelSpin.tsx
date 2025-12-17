@@ -13,6 +13,7 @@ import { spinWheel } from "./wheel.logic";
 import { useWallet } from "../../../hooks/useWallet";
 import { useSuiContract } from "../../../hooks/useSuiContract";
 import { TREASURY_ADDRESS } from "../../../config/web3";
+import { saveTx } from "../../../utils/saveTx"; // ✅ IMPORT
 
 export default function WheelSpin() {
   const { address } = useWallet();
@@ -22,7 +23,7 @@ export default function WheelSpin() {
   const [rotate, setRotate] = useState(0);
   const [spinning, setSpinning] = useState(false);
 
-  // ▶️ Spin handler
+  // ▶️ Spin handler (FULL HISTORY)
   const onSpin = async () => {
     if (!address) {
       showNotification({
@@ -38,20 +39,61 @@ export default function WheelSpin() {
     setSpinning(true);
 
     await transferSui(TREASURY_ADDRESS, bet, {
-      onSuccess: () => {
+      onSuccess: (tx) => {
+        // 1️⃣ BET
+        saveTx({
+          id: crypto.randomUUID(),
+          game: "Wheel",
+          amount: bet,
+          status: "success",
+          result: "bet",
+          digest: tx?.digest,
+          timestamp: Date.now(),
+        });
+
         const result = spinWheel();
 
         // cộng thêm vòng quay để animation không quay ngược
         setRotate((prev) => prev + result.rotateDeg + 360 * 3);
 
         setTimeout(() => {
+          const reward = bet * result.reward.multiplier;
+
           if (result.reward.multiplier > 0) {
+            // 2️⃣ WIN
+            saveTx({
+              id: crypto.randomUUID(),
+              game: "Wheel",
+              amount: bet,
+              status: "success",
+              result: "win",
+              reward,
+              meta: {
+                label: result.reward.label,
+                multiplier: result.reward.multiplier,
+              },
+              timestamp: Date.now(),
+            });
+
             showNotification({
               title: "🎉 Thắng!",
-              message: `Nhận ${(bet * result.reward.multiplier).toFixed(2)} SUI`,
+              message: `Nhận ${reward.toFixed(2)} SUI`,
               color: "green",
             });
           } else {
+            // 3️⃣ LOSE
+            saveTx({
+              id: crypto.randomUUID(),
+              game: "Wheel",
+              amount: bet,
+              status: "success",
+              result: "lose",
+              meta: {
+                label: result.reward.label,
+              },
+              timestamp: Date.now(),
+            });
+
             showNotification({
               title: "💀 Thua",
               message: "Chúc may mắn lần sau!",
@@ -62,7 +104,17 @@ export default function WheelSpin() {
           setSpinning(false);
         }, 3600);
       },
+
       onError: () => {
+        // 4️⃣ FAILED
+        saveTx({
+          id: crypto.randomUUID(),
+          game: "Wheel",
+          amount: bet,
+          status: "failed",
+          timestamp: Date.now(),
+        });
+
         setSpinning(false);
       },
     });

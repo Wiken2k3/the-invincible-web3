@@ -16,6 +16,7 @@ import { TREASURY_ADDRESS } from "../../../config/web3";
 
 import { generateTower } from "./tower.logic";
 import { MULTIPLIERS } from "./tower.config";
+import { saveTx } from "../../../utils/saveTx"; // ✅ IMPORT
 
 export default function Tower() {
   const { address } = useWallet();
@@ -26,6 +27,7 @@ export default function Tower() {
   const [tower, setTower] = useState<string[]>([]);
   const [playing, setPlaying] = useState(false);
 
+  // ▶️ Start Game (BET)
   const startGame = async () => {
     if (!address) {
       showNotification({
@@ -37,23 +39,56 @@ export default function Tower() {
     }
 
     await transferSui(TREASURY_ADDRESS, bet, {
-      onSuccess: () => {
+      onSuccess: (tx) => {
+        // 💰 BET TX
+        saveTx({
+          id: crypto.randomUUID(),
+          game: "Tower",
+          amount: bet,
+          status: "success",
+          result: "bet",
+          digest: tx?.digest,
+          timestamp: Date.now(),
+        });
+
         setTower(generateTower());
         setLevel(0);
         setPlaying(true);
       },
+      onError: () => {
+        // ❌ TX FAILED
+        saveTx({
+          id: crypto.randomUUID(),
+          game: "Tower",
+          amount: bet,
+          status: "failed",
+          timestamp: Date.now(),
+        });
+      },
     });
   };
 
+  // ▶️ Pick level
   const pick = () => {
     const result = tower[level];
 
     if (result === "BOMB") {
+      // ❌ LOSE
+      saveTx({
+        id: crypto.randomUUID(),
+        game: "Tower",
+        amount: bet,
+        status: "success",
+        result: "lose",
+        timestamp: Date.now(),
+      });
+
       showNotification({
         title: "💣 BOOM!",
         message: "Bạn đã thua!",
         color: "red",
       });
+
       setPlaying(false);
       return;
     }
@@ -68,8 +103,19 @@ export default function Tower() {
     });
   };
 
+  // 💰 Cash Out (WIN)
   const cashOut = () => {
     const reward = bet * MULTIPLIERS[level - 1];
+
+    saveTx({
+      id: crypto.randomUUID(),
+      game: "Tower",
+      amount: bet,
+      status: "success",
+      result: "win",
+      reward,
+      timestamp: Date.now(),
+    });
 
     showNotification({
       title: "💰 CASH OUT",

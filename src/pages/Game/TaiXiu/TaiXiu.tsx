@@ -14,6 +14,7 @@ import { TREASURY_ADDRESS } from "../../../config/web3";
 
 import { rollDice } from "./taixiu.logic";
 import Dice from "./Dice";
+import { saveTx } from "../../../utils/saveTx"; // ✅ THÊM IMPORT
 
 type Choice = "TAI" | "XIU";
 
@@ -26,7 +27,7 @@ export default function TaiXiu() {
   const [dice, setDice] = useState<number[]>([]);
   const [spinning, setSpinning] = useState(false);
 
-  // ▶️ Bet handler (WEB3 FLOW)
+  // ▶️ Bet handler (WEB3 FLOW + HISTORY)
   const onPlay = async () => {
     if (!address) {
       showNotification({
@@ -42,18 +43,43 @@ export default function TaiXiu() {
     setSpinning(true);
 
     await transferSui(TREASURY_ADDRESS, bet, {
-      onSuccess: () => {
+      onSuccess: (tx) => {
         const result = rollDice();
         setDice(result.dice);
 
         setTimeout(() => {
           if (result.result === choice) {
+            const reward = bet * 2;
+
+            // ✅ WIN
+            saveTx({
+              id: crypto.randomUUID(),
+              game: "Tài Xỉu",
+              amount: bet,
+              status: "success",
+              result: "win",
+              reward,
+              digest: tx?.digest,
+              timestamp: Date.now(),
+            });
+
             showNotification({
               title: "🎉 Thắng!",
-              message: `Nhận ${(bet * 2).toFixed(2)} SUI`,
+              message: `Nhận ${reward.toFixed(2)} SUI`,
               color: "green",
             });
           } else {
+            // ❌ LOSE
+            saveTx({
+              id: crypto.randomUUID(),
+              game: "Tài Xỉu",
+              amount: bet,
+              status: "success",
+              result: "lose",
+              digest: tx?.digest,
+              timestamp: Date.now(),
+            });
+
             showNotification({
               title: "💀 Thua",
               message: `Kết quả: ${result.sum} (${result.result})`,
@@ -64,7 +90,17 @@ export default function TaiXiu() {
           setSpinning(false);
         }, 1200);
       },
+
       onError: () => {
+        // ❌ TX FAILED
+        saveTx({
+          id: crypto.randomUUID(),
+          game: "Tài Xỉu",
+          amount: bet,
+          status: "failed",
+          timestamp: Date.now(),
+        });
+
         setSpinning(false);
       },
     });

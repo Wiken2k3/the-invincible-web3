@@ -14,6 +14,7 @@ import { spinReels } from "./slot.logic";
 import { useWallet } from "../../../hooks/useWallet";
 import { useSuiContract } from "../../../hooks/useSuiContract";
 import { TREASURY_ADDRESS } from "../../../config/web3";
+import { saveTx } from "../../../utils/saveTx"; // ✅ IMPORT
 
 export default function SlotMachine() {
   const { address } = useWallet();
@@ -23,7 +24,10 @@ export default function SlotMachine() {
   const [reels, setReels] = useState<any[]>([]);
   const [spinning, setSpinning] = useState(false);
 
-  // ▶️ Spin handler (WEB3 FLOW)
+  // 🔥 TX DIGEST
+  const [txDigest, setTxDigest] = useState<string | undefined>();
+
+  // ▶️ Spin handler (WEB3 FLOW + HISTORY)
   const onSpin = async () => {
     if (!address) {
       showNotification({
@@ -38,18 +42,45 @@ export default function SlotMachine() {
     setSpinning(true);
 
     await transferSui(TREASURY_ADDRESS, bet, {
-      onSuccess: () => {
+      onSuccess: (tx) => {
+        setTxDigest(tx?.digest);
+
         const result = spinReels();
         setReels(result.reels);
 
         setTimeout(() => {
           if (result.isWin) {
+            const reward = bet * result.payout;
+
+            // ✅ WIN
+            saveTx({
+              id: crypto.randomUUID(),
+              game: "Slot Machine",
+              amount: bet,
+              status: "success",
+              result: "win",
+              reward,
+              digest: tx?.digest,
+              timestamp: Date.now(),
+            });
+
             showNotification({
               title: "🎉 JACKPOT!",
-              message: `Bạn thắng ${(bet * result.payout).toFixed(2)} SUI`,
+              message: `Bạn thắng ${reward.toFixed(2)} SUI`,
               color: "green",
             });
           } else {
+            // ❌ LOSE
+            saveTx({
+              id: crypto.randomUUID(),
+              game: "Slot Machine",
+              amount: bet,
+              status: "success",
+              result: "lose",
+              digest: tx?.digest,
+              timestamp: Date.now(),
+            });
+
             showNotification({
               title: "😢 Thua",
               message: "Chúc may mắn lần sau!",
@@ -60,7 +91,17 @@ export default function SlotMachine() {
           setSpinning(false);
         }, 800);
       },
+
       onError: () => {
+        // ❌ TX FAILED
+        saveTx({
+          id: crypto.randomUUID(),
+          game: "Slot Machine",
+          amount: bet,
+          status: "failed",
+          timestamp: Date.now(),
+        });
+
         setSpinning(false);
       },
     });
