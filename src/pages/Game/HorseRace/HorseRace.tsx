@@ -12,7 +12,7 @@ import { showNotification } from "@mantine/notifications";
 
 import { useWallet } from "../../../hooks/useWallet";
 import { useSuiContract } from "../../../hooks/useSuiContract";
-import { TREASURY_ADDRESS } from "../../../config/web3";
+import { TREASURY_ADDRESS, TREASURY_ID } from "../../../config/web3";
 
 import { HORSE_ODDS } from "./horse.config";
 import { useHorseRace } from "./useHorseRace";

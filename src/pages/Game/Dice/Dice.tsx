@@ -14,7 +14,7 @@ import { showNotification } from "@mantine/notifications";
 import { rollDice } from "./dice.logic";
 import { useWallet } from "../../../hooks/useWallet";
 import { useSuiContract } from "../../../hooks/useSuiContract";
-import { TREASURY_ADDRESS, isValidSuiAddress } from "../../../config/web3";
+import { TREASURY_ADDRESS, TREASURY_ID, isValidSuiAddress } from "../../../config/web3";
 import { saveTx } from "../../../utils/saveTx"; // ✅ IMPORT THÊM
 
 type Choice = "TAI" | "XIU";

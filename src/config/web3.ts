@@ -1,14 +1,20 @@
 /**
  * 🎮 Sui Game Treasury Configuration
  * 
- * Change TREASURY_ADDRESS to your actual Sui wallet address
- * Example format: 0x1234567890abcdef...
+ * PACKAGE_ID: Smart contract package deployed on Sui
+ * TREASURY_ID: Treasury object that holds game funds (receives bets, sends rewards)
  */
 
-// ⚠️ REPLACE THIS WITH YOUR ACTUAL SUI WALLET ADDRESS
-// You can find your wallet address in Sui Wallet / Slush Wallet
-export const TREASURY_ADDRESS =
-  "0x0000000000000000000000000000000000000000000000000000000000000000";
+// 🎯 Smart Contract Package ID (Mines contract on Testnet)
+export const PACKAGE_ID =
+  "0x7f8cd5947a963c08e6f7c846fc86c41b7ff5050c038c406807b0a895f701bc9b";
+
+// 🏦 Treasury Object ID (receives bets, sends rewards)
+export const TREASURY_ID =
+  "0xbe0f1df0756436d511abae97fe8e33c69f811d7fcf7f3a49b128f8e642ad2471";
+
+// For backward compatibility with existing code
+export const TREASURY_ADDRESS = TREASURY_ID;
 
 // Devnet / Testnet config (for development)
 export const NETWORKS = {

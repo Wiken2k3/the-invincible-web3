@@ -12,7 +12,7 @@ import { spinWheel } from "./wheel.logic";
 
 import { useWallet } from "../../../hooks/useWallet";
 import { useSuiContract } from "../../../hooks/useSuiContract";
-import { TREASURY_ADDRESS } from "../../../config/web3";
+import { TREASURY_ADDRESS, TREASURY_ID } from "../../../config/web3";
 import { saveTx } from "../../../utils/saveTx"; // ✅ IMPORT
 
 export default function WheelSpin() {

@@ -30,7 +30,7 @@ const networks = {
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
-      <SuiClientProvider networks={networks} defaultNetwork="devnet">
+      <SuiClientProvider networks={networks} defaultNetwork="testnet">
         <WalletProvider autoConnect>
           <MantineProvider theme={theme} defaultColorScheme="dark">
             <Notifications position="top-right" zIndex={3000} />
