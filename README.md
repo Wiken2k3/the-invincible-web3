@@ -102,13 +102,21 @@ Khi thu hoạch có tỉ lệ xuất hiện:
 
 ---
 # 🧩 Công nghệ sử dụng
-- **React 18 + Vite**
-- **Mantine UI**
-- **Framer Motion**
-- **React Router DOM**
-- **LocalStorage**
-- **TypeScript + JSX**
-- Responsive UI
+React 18 + Vite
+
+TypeScript
+
+Mantine UI
+
+Framer Motion
+
+React Router DOM
+
+Sui Wallet Adapter
+
+LocalStorage
+
+Responsive UI
 
 ---
 # 🛠️ Cài đặt
@@ -130,31 +138,32 @@ npm run dev
  ```bash
 src/
 │
-├── assets/
-│   ├── seeds/
-│   │   ├── farmhome.png
-│   │   ├── game.png
-│   │   ├── logo.png
-│   │   ├── mysterybox.png
-│   │   └── Plannet.png
-│   └── react.svg
+├── config/
+│   └── web3.ts          # Sui config & Treasury address
 │
-├── components/
-│   ├── AnimatedField.jsx
-│   ├── FarmTile.tsx
-│   └── PlotCell.tsx
+├── hooks/
+│   ├── useWallet.ts
+│   └── useSuiContract.ts
+│
+├── pages/
+│   ├── Home/
+│   ├── GameHub/
+│   └── Game/
+│       ├── Dice/
+│       ├── TaiXiu/
+│       ├── Mines/
+│       ├── Slot/
+│       ├── Tower/
+│       ├── Wheel/
+│       └── HorseRace/
+│
+├── utils/
+│   └── saveTx.ts        # Transaction History helper
 │
 ├── layout/
 │   └── MainLayout.tsx
 │
-├── pages/
-│   ├── Home.tsx
-│   ├── Game.tsx
-│   └── Reward.tsx
-│
 ├── App.tsx
-├── App.css
-├── index.css
 ├── main.tsx
 └── theme.ts
 ```
