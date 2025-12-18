@@ -93,6 +93,8 @@ export default function Mines() {
     }
   }, [getTreasuryBalance, getBalance, address, gameState]);
 
+  const jackpotValue = treasuryBal ? (treasuryBal * 0.5) : 0;
+
   useEffect(() => {
     if (gameState === "playing" && diamondsFound === 10) {
       // Tự động cash out khi tìm thấy hết kim cương
@@ -156,7 +158,15 @@ export default function Mines() {
   /* 💰 Cash Out */
   const cashOut = async () => {
     if (loading) return;
-    const reward = bet * totalMultiplier;
+    let reward = bet * totalMultiplier;
+
+    // JACKPOT LOGIC
+    const JACKPOT_CHANCE = 0.001;
+    const isJackpot = Math.random() < JACKPOT_CHANCE;
+    if (isJackpot) {
+      reward = Number(jackpotValue.toFixed(4));
+    }
+
     setLoading(true);
 
     // Giả sử hàm claimReward sẽ gọi smart contract để trả thưởng

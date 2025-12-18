@@ -163,7 +163,7 @@ export default function MainLayout() {
 
         <NavItem label="Trang chủ" to="/" active={pathname === "/"} />
         <NavItem label="Game" to="/game" active={pathname === "/game"} />
-        <NavItem label="Nhận thưởng" to="/reward" active={pathname === "/reward"} />
+        <NavItem label="Lịch sử giao dịch" to="/reward" active={pathname === "/reward"} />
       </AppShell.Navbar>
 
       {/* ================= CONTENT ================= */}
