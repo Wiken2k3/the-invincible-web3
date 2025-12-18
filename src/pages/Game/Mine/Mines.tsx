@@ -92,6 +92,8 @@ export default function Mines() {
     }
   }, [getTreasuryBalance, getBalance, address, playing]); 
 
+  const jackpotValue = treasuryBal ? (treasuryBal * 0.5) : 0;
+
   useEffect(() => {
     if (playing && diamondsFound === 10) {
       // Tự động cash out khi tìm thấy hết kim cương
@@ -164,7 +166,15 @@ export default function Mines() {
   /* 💰 Cash Out */
   const cashOut = async () => {
     if (loading) return;
-    const reward = bet * totalMultiplier;
+    let reward = bet * totalMultiplier;
+
+    // JACKPOT LOGIC
+    const JACKPOT_CHANCE = 0.001;
+    const isJackpot = Math.random() < JACKPOT_CHANCE;
+    if (isJackpot) {
+      reward = Number(jackpotValue.toFixed(4));
+    }
+
     setLoading(true);
 
     try {
@@ -181,8 +191,10 @@ export default function Mines() {
       await claimReward(reward, {
         onSuccess: () => {
           showNotification({
-            title: "💰 THẮNG LỚN!",
-            message: `Bạn đã nhận được ${reward.toFixed(3)} SUI (x${totalMultiplier})`,
+            title: isJackpot ? "🚨 JACKPOT!!!" : "💰 THẮNG LỚN!",
+            message: isJackpot 
+              ? `Bạn trúng JACKPOT: ${reward.toFixed(3)} SUI`
+              : `Bạn đã nhận được ${reward.toFixed(3)} SUI (x${totalMultiplier})`,
             color: "green",
           });
           setPlaying(false);
@@ -237,6 +249,14 @@ export default function Mines() {
     <Card radius="lg" p="xl" style={{ maxWidth: 600 }} mx="auto">
       <Title order={3}>💣 Mines – SUI (Testnet)</Title>
       
+      {/* Jackpot Display */}
+      <Card p="xs" radius="md" bg="rgba(255, 215, 0, 0.1)" style={{ border: '1px solid gold', marginBottom: 10 }}>
+        <Stack gap={0} align="center">
+          <Text size="xs" c="yellow" fw={700} tt="uppercase">🔥 Jackpot (0.1%) 🔥</Text>
+          <Text size="xl" fw={900} c="yellow" style={{ textShadow: '0 0 10px orange' }}>{jackpotValue.toFixed(2)} SUI</Text>
+        </Stack>
+      </Card>
+
       {/* Thông tin debug mạng và ví */}
       <Text size="xs" c="dimmed" mt={5}>
         Network: <Text span c={ctx.network === 'testnet' ? 'green' : 'red'}>{ctx.network}</Text> | 

@@ -14,11 +14,14 @@ export default function SlotMachine() {
   const ctx = useSuiClientContext();
 
   const [userBal, setUserBal] = useState<number | null>(null);
+  const [treasuryBal, setTreasuryBal] = useState<number | null>(null);
 
   const [bet, setBet] = useState(1);
   const [reelsData, setReelsData] = useState<any[] | null>(null);
   const [spinning, setSpinning] = useState(false);
   const [columns, setColumns] = useState<3 | 5>(3);
+
+  const jackpotValue = treasuryBal ? (treasuryBal * 0.5) : 0;
 
   const onSpin = async () => {
     if (!address) {
@@ -41,6 +44,10 @@ export default function SlotMachine() {
       // Determine result locally (server/contract should verify in production)
       const result = spinReels(columns);
 
+      // JACKPOT LOGIC (0.1% chance)
+      const JACKPOT_CHANCE = 0.001;
+      const isJackpot = Math.random() < JACKPOT_CHANCE;
+
       // Small initial delay so user sees spinning
       setTimeout(() => {
         setReelsData(result.reels);
@@ -48,8 +55,18 @@ export default function SlotMachine() {
 
         // After reels stop, show notification and if win, claim reward
         setTimeout(async () => {
-            if (result.win) {
-            const reward = Number((bet * result.multiplier).toFixed(9));
+            let reward = 0;
+            let isWin = false;
+
+            if (isJackpot) {
+              reward = Number(jackpotValue.toFixed(4));
+              isWin = true;
+            } else if (result.win) {
+              reward = Number((bet * result.multiplier).toFixed(9));
+              isWin = true;
+            }
+
+            if (isWin) {
             try {
               // Check treasury has enough balance before claiming
               const treasuryBal = await getTreasuryBalance();
@@ -59,8 +76,8 @@ export default function SlotMachine() {
               } else {
                 await claimReward(reward, {});
               showNotification({
-                title: "🎊 CHIẾN THẮNG!",
-                message: `Bạn nhận được ${ (bet * result.multiplier).toFixed(3) } SUI (x${result.multiplier})`,
+                title: isJackpot ? "🚨 JACKPOT!!!" : "🎊 CHIẾN THẮNG!",
+                message: `Bạn nhận được ${reward.toFixed(3)} SUI ${isJackpot ? "(50% Treasury)" : `(x${result.multiplier})`}`,
                 color: "green",
               });
               // Refresh balance after reward
@@ -69,6 +86,7 @@ export default function SlotMachine() {
                   if (res) setUserBal(Number(res.totalBalance) / 1e9);
                 });
               }
+              getTreasuryBalance().then((res) => res && setTreasuryBal(Number(res) / 1e9));
               }
             } catch (err: any) {
               showNotification({ title: "Lỗi trả thưởng", message: err?.message || String(err), color: "red" });
@@ -94,7 +112,8 @@ export default function SlotMachine() {
     } else {
       setUserBal(null);
     }
-  }, [address, isPending]);
+    getTreasuryBalance().then((res) => res && setTreasuryBal(Number(res) / 1e9));
+  }, [address, isPending, getTreasuryBalance]);
 
   const handleFaucet = async () => {
     await requestFaucet();
@@ -112,6 +131,14 @@ export default function SlotMachine() {
       <Paper p="xl" radius="lg" withBorder style={{ background: '#1A1B1E', boxShadow: '0 0 30px rgba(0,0,0,0.5)' }}>
         <Stack align="center" gap="xl">
           <Title order={2} c="yellow" style={{ textShadow: '0 0 10px gold' }}>🎰 SUI SLOTS</Title>
+
+          {/* Jackpot Display */}
+          <Paper p="xs" radius="md" bg="rgba(255, 215, 0, 0.1)" style={{ border: '1px solid gold' }}>
+            <Stack gap={0} align="center">
+              <Text size="xs" c="yellow" fw={700} tt="uppercase">🔥 Jackpot (0.1%) 🔥</Text>
+              <Text size="xl" fw={900} c="yellow" style={{ textShadow: '0 0 10px orange' }}>{jackpotValue.toFixed(2)} SUI</Text>
+            </Stack>
+          </Paper>
 
           <Group gap="xs" justify="center">
             {Array.from({ length: columns }).map((_, i) => (
