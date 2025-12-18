@@ -1,64 +1,72 @@
-import {
-  Container,
-  Button,
-  Group,
-  Title,
-  NumberInput,
-} from "@mantine/core";
-import { useState } from "react";
+import { Container, Button, Group, Title, NumberInput, Paper, Stack, Text } from "@mantine/core";
+import { useEffect, useState } from "react";
 import { showNotification } from "@mantine/notifications";
-
 import Reel from "./Reel";
 import { spinReels } from "./slot.logic";
-
 import { useWallet } from "../../../hooks/useWallet";
 import { useSuiContract } from "../../../hooks/useSuiContract";
-import { TREASURY_ADDRESS } from "../../../config/web3";
+import { useSuiClientContext } from "@mysten/dapp-kit";
 
 export default function SlotMachine() {
   const { address } = useWallet();
-  const { transferSui } = useSuiContract();
+  const { placeBet, claimReward, getBalance, requestFaucet, isPending } = useSuiContract();
+  const ctx = useSuiClientContext();
+
+  const [userBal, setUserBal] = useState<number | null>(null);
 
   const [bet, setBet] = useState(1);
-  const [reels, setReels] = useState<any[]>([]);
+  const [reelsData, setReelsData] = useState<any[] | null>(null);
   const [spinning, setSpinning] = useState(false);
 
-  // ▶️ Spin handler (WEB3 FLOW)
   const onSpin = async () => {
     if (!address) {
-      showNotification({
-        title: "Chưa kết nối ví",
-        message: "Vui lòng connect wallet",
-        color: "red",
-      });
+      showNotification({ title: "Lỗi", message: "Vui lòng kết nối ví", color: "red" });
       return;
     }
 
-    if (spinning) return;
+    // Reset UI and start spinning animation while tx is pending
     setSpinning(true);
+    setReelsData(null);
 
-    await transferSui(TREASURY_ADDRESS, bet, {
+    // Place bet on-chain first (locks player's bet in Treasury)
+    await placeBet(bet, {
       onSuccess: () => {
+        // Determine result locally (server/contract should verify in production)
         const result = spinReels();
-        setReels(result.reels);
 
+        // Small initial delay so user sees spinning
         setTimeout(() => {
-          if (result.isWin) {
-            showNotification({
-              title: "🎉 JACKPOT!",
-              message: `Bạn thắng ${(bet * result.payout).toFixed(2)} SUI`,
-              color: "green",
-            });
-          } else {
-            showNotification({
-              title: "😢 Thua",
-              message: "Chúc may mắn lần sau!",
-              color: "red",
-            });
-          }
-
+          setReelsData(result.reels);
           setSpinning(false);
-        }, 800);
+
+          // After reels stop, show notification and if win, claim reward
+          setTimeout(async () => {
+            if (result.isWin) {
+              const reward = Number((bet * result.payout).toFixed(9));
+              // Call contract to pay out reward back to player
+              await claimReward(reward, {
+                onSuccess: () => {
+                  showNotification({
+                    title: "🎊 CHIẾN THẮNG!",
+                    message: `Bạn nhận được ${ (bet * result.payout).toFixed(3) } SUI`,
+                    color: "green",
+                  });
+                  // Refresh balance after reward
+                  if (address) {
+                    getBalance().then((res) => {
+                      if (res) setUserBal(Number(res.totalBalance) / 1e9);
+                    });
+                  }
+                },
+                onError: (err: Error) => {
+                  showNotification({ title: "Lỗi trả thưởng", message: err.message, color: "red" });
+                },
+              });
+            } else {
+              showNotification({ title: "Thua", message: "Chúc may mắn lần sau!", color: "gray" });
+            }
+          }, 2500);
+        }, 500);
       },
       onError: () => {
         setSpinning(false);
@@ -66,39 +74,81 @@ export default function SlotMachine() {
     });
   };
 
+  // Load user balance and refresh after pending txs settle
+  useEffect(() => {
+    if (address) {
+      getBalance().then((res) => {
+        if (res) setUserBal(Number(res.totalBalance) / 1e9);
+      });
+    } else {
+      setUserBal(null);
+    }
+  }, [address, isPending]);
+
+  const handleFaucet = async () => {
+    await requestFaucet();
+    setTimeout(() => {
+      if (address) {
+        getBalance().then((res) => {
+          if (res) setUserBal(Number(res.totalBalance) / 1e9);
+        });
+      }
+    }, 3000);
+  };
+
   return (
-    <Container size="sm" ta="center">
-      <Title>🎰 Slot Machine</Title>
+    <Container size="xs" py={40}>
+      <Paper p="xl" radius="lg" withBorder style={{ background: '#1A1B1E', boxShadow: '0 0 30px rgba(0,0,0,0.5)' }}>
+        <Stack align="center" gap="xl">
+          <Title order={2} c="yellow" style={{ textShadow: '0 0 10px gold' }}>🎰 SUI SLOTS</Title>
 
-      {/* Reels */}
-      <Group justify="center" mt="lg">
-        {reels.map((r, i) => (
-          <Reel key={i} icon={r.icon} />
-        ))}
-      </Group>
+          <Group gap="xs" justify="center">
+            {[0, 1, 2].map((i) => (
+              <Reel 
+                key={i} 
+                spinning={spinning} 
+                finalSymbol={reelsData ? reelsData[i] : null} 
+                delay={i * 0.4} // Hiệu ứng cột 1 dừng trước, cột 3 dừng sau
+              />
+            ))}
+          </Group>
 
-      {/* Bet */}
-      <NumberInput
-        mt="lg"
-        label="Bet (SUI)"
-        min={0.1}
-        value={bet}
-        onChange={(v) => setBet(Number(v))}
-      />
+          <Group position="apart" w="100%">
+            <Text size="xs" c="dimmed">
+              Network: <Text span c={ctx.network === 'testnet' ? 'green' : 'red'}>{ctx.network}</Text>
+            </Text>
+            <Text size="xs" c="dimmed">
+              Wallet: {address ? `${address.slice(0,6)}...${address.slice(-4)}` : 'Not connected'}
+            </Text>
+            <Text size="xs" c="yellow">
+              {userBal !== null ? `${userBal.toFixed(3)} SUI` : '...'}
+            </Text>
+          </Group>
+          <Group w="100%" position="right">
+            <Button size="xs" variant="subtle" onClick={handleFaucet}>💧 Faucet</Button>
+          </Group>
 
-      {/* Spin */}
-      <Button
-        mt="lg"
-        size="xl"
-        loading={spinning}
-        onClick={onSpin}
-        style={{
-          background: "linear-gradient(135deg,#facc15,#f97316)",
-          boxShadow: "0 0 25px rgba(250,204,21,0.6)",
-        }}
-      >
-        SPIN 🎰
-      </Button>
+          <NumberInput
+            label="Mức cược (SUI)"
+            min={0.1}
+            value={bet}
+            onChange={(v) => setBet(Number(v))}
+            w="100%"
+          />
+
+          <Button
+            fullWidth
+            size="xl"
+            onClick={onSpin}
+            loading={spinning || isPending}
+            disabled={spinning || isPending}
+            variant="gradient"
+            gradient={{ from: 'yellow', to: 'orange' }}
+          >
+            QUAY NGAY
+          </Button>
+        </Stack>
+      </Paper>
     </Container>
   );
 }
