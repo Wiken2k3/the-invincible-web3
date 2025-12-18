@@ -29,9 +29,9 @@ const DIFFICULTY_CONFIG: Record<
   Difficulty,
   { mines: number; empty: number; gems: number; min: number; max: number }
 > = {
-  easy: { mines: 24, empty: 30, gems: 10, min: 1.1, max: 2.0 },
+  easy: { mines: 12, empty: 42, gems: 10, min: 1.1, max: 2.0 },
   medium: { mines: 30, empty: 24, gems: 10, min: 1.5, max: 4.0 },
-  hard: { mines: 42, empty: 12, gems: 10, min: 2.5, max: 10.0 },
+  hard: { mines: 42, empty: 12, gems: 10, min: 2.5, max: 8.0 },
 };
 
 type Cell =
