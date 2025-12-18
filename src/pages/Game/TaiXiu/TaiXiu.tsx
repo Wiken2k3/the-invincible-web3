@@ -7,6 +7,8 @@ import {
   Text,
   Table,
   Divider,
+  Paper,
+  Stack,
 } from "@mantine/core";
 import { useState, useEffect } from "react";
 import { showNotification } from "@mantine/notifications";
@@ -58,6 +60,8 @@ export default function TaiXiu() {
       if (val) setTreasuryBal(Number(val) / 1e9);
     });
   }, [getTreasuryBalance]);
+
+  const jackpotValue = treasuryBal ? (treasuryBal * 0.5) : 0;
 
   // 🧠 NEW STATE
   const [history, setHistory] = useState<HistoryItem[]>([]);
@@ -114,8 +118,18 @@ export default function TaiXiu() {
     setIsCovered(false);
     
     const { result, sum } = tempResult;
-    const win = result === choice;
-    const reward = win ? bet * 2 : 0;
+    
+    // JACKPOT LOGIC
+    const JACKPOT_CHANCE = 0.001;
+    const isJackpot = Math.random() < JACKPOT_CHANCE;
+
+    let win = result === choice;
+    let reward = win ? bet * 2 : 0;
+
+    if (isJackpot) {
+      win = true;
+      reward = Number(jackpotValue.toFixed(4));
+    }
 
     // 📜 Update history
     setHistory((prev) => [{ sum, result, win, reward }, ...prev].slice(0, 10));
@@ -128,8 +142,10 @@ export default function TaiXiu() {
       try {
         await claimReward(reward, {});
         showNotification({
-          title: "🎉 Thắng!",
-          message: `Kết quả: ${sum} (${result}) - Nhận ${reward} SUI`,
+          title: isJackpot ? "🚨 JACKPOT!!!" : "🎉 Thắng!",
+          message: isJackpot 
+            ? `Bạn trúng JACKPOT: ${reward} SUI`
+            : `Kết quả: ${sum} (${result}) - Nhận ${reward} SUI`,
           color: "green",
         });
         getBalance().then((res: any) => res && setUserBal(Number(res.totalBalance) / 1e9));
@@ -250,6 +266,15 @@ export default function TaiXiu() {
 
       <div className="board">
         <Title c="yellow">🎲 TÀI XỈU ON-CHAIN</Title>
+        
+        {/* Jackpot Display */}
+        <Paper p="xs" radius="md" bg="rgba(255, 215, 0, 0.1)" style={{ border: '1px solid gold', marginBottom: 10, width: 'fit-content', margin: '0 auto 10px auto' }}>
+          <Stack gap={0} align="center">
+            <Text size="xs" c="yellow" fw={700} tt="uppercase">🔥 Jackpot (0.1%) 🔥</Text>
+            <Text size="xl" fw={900} c="yellow" style={{ textShadow: '0 0 10px orange' }}>{jackpotValue.toFixed(2)} SUI</Text>
+          </Stack>
+        </Paper>
+
         <Group justify="center" gap="xs">
           <Text c="dimmed" size="sm">Ví: {userBal !== null ? userBal.toFixed(3) : "..."} SUI</Text>
           <Text c="dimmed" size="sm">|</Text>
