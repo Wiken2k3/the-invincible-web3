@@ -12,12 +12,10 @@ import { showNotification } from "@mantine/notifications";
 
 import { useWallet } from "../../../hooks/useWallet";
 import { useSuiContract } from "../../../hooks/useSuiContract";
-import { TREASURY_ADDRESS, TREASURY_ID } from "../../../config/web3";
+import { TREASURY_ADDRESS } from "../../../config/web3";
 
+import { generateRace } from "./horse.logic";
 import { HORSE_ODDS } from "./horse.config";
-import { useHorseRace } from "./useHorseRace";
-import HorseTrack from "./HorseTrack";
-import { saveTx } from "../../../utils/saveTx"; // ✅ THÊM IMPORT
 
 export default function HorseRace() {
   const { address } = useWallet();
@@ -25,9 +23,9 @@ export default function HorseRace() {
 
   const [bet, setBet] = useState(1);
   const [selectedHorse, setSelectedHorse] = useState<number | null>(null);
-  const { horses, racing, start, reset } = useHorseRace();
+  const [horses, setHorses] = useState<any[]>([]);
+  const [racing, setRacing] = useState(false);
   const [winner, setWinner] = useState<number | null>(null);
-  const [countdown, setCountdown] = useState<number | null>(null);
 
   // ▶️ Start Race
   const startRace = async () => {
@@ -49,79 +47,33 @@ export default function HorseRace() {
       return;
     }
 
+    setRacing(true);
     setWinner(null);
 
-    // ⏳ countdown
-    let cd = 3;
-    setCountdown(cd);
-    const cdInterval = setInterval(() => {
-      cd -= 1;
-      setCountdown(cd > 0 ? cd : null);
-      if (cd <= 0) clearInterval(cdInterval);
-    }, 1000);
-
     await transferSui(TREASURY_ADDRESS, bet, {
-      onSuccess: async (tx) => {
-        try {
-          reset();
-          await new Promise((r) => setTimeout(r, 3500));
+      onSuccess: () => {
+        const race = generateRace();
+        setHorses(race.horses);
+        setWinner(race.winner);
 
-          const winId = await start();
-          setWinner(winId);
-
-          const isWin = winId === selectedHorse;
-
-          // 🔥 LƯU TRANSACTION
-          saveTx({
-            id: crypto.randomUUID(),
-            game: "HorseRace",
-            amount: bet,
-            status: "success",
-            result: isWin ? "win" : "lose",
-            digest: tx?.digest,
-            timestamp: Date.now(),
-          });
-
-          if (isWin) {
-            const multiplier =
-              HORSE_ODDS.find((h) => h.id === winId)?.multiplier || 1;
-
-            showNotification({
-              title: "🏆 Thắng!",
-              message: `Bạn thắng ${(bet * multiplier).toFixed(2)} SUI`,
-              color: "green",
-            });
-          } else {
-            showNotification({
-              title: "❌ Thua",
-              message: "Ngựa của bạn không thắng",
-              color: "red",
-            });
-          }
-        } catch (err) {
+        if (race.winner === selectedHorse) {
           showNotification({
-            title: "Lỗi",
-            message: String(err),
+            title: "🏆 Thắng!",
+            message: `Bạn thắng ${(bet * 3).toFixed(2)} SUI`,
+            color: "green",
+          });
+        } else {
+          showNotification({
+            title: "❌ Thua",
+            message: "Ngựa của bạn không thắng",
             color: "red",
           });
         }
+
+        setRacing(false);
       },
-
-      onError: (err) => {
-        // ❌ TX FAIL
-        saveTx({
-          id: crypto.randomUUID(),
-          game: "HorseRace",
-          amount: bet,
-          status: "failed",
-          timestamp: Date.now(),
-        });
-
-        showNotification({
-          title: "Lỗi giao dịch",
-          message: "Giao dịch bị hủy",
-          color: "red",
-        });
+      onError: () => {
+        setRacing(false);
       },
     });
   };
@@ -159,7 +111,7 @@ export default function HorseRace() {
         disabled={selectedHorse === null}
         onClick={startRace}
       >
-        {countdown ? `⏳ ${countdown}` : "🏁 Start Race"}
+        🏁 Start Race
       </Button>
 
       {/* Hiển thị đua */}

@@ -6,21 +6,16 @@ import {
   Image,
   NavLink,
   Divider,
-  ActionIcon,
-  Tooltip,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { Link, Outlet, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { useEffect, useState } from "react";
-import { Settings } from "lucide-react";
+import { useEffect } from "react";
 import logoImg from "../assets/logo.png";
-import ConfigModal from "../components/ConfigModal";
 
 // 🔥 Import Web3 (Sui Wallet)
 import { useWallet } from "../hooks/useWallet";
 import { ConnectModal } from "@mysten/dapp-kit";
-import { TREASURY_ADDRESS } from "../config/web3";
 
 /* =========================
    🎨 THEME CONFIG
@@ -37,9 +32,7 @@ const UI = {
 ========================= */
 export default function MainLayout() {
   const [opened, { toggle, close }] = useDisclosure();
-  const [configOpened, { open: openConfig, close: closeConfig }] = useDisclosure();
   const { pathname } = useLocation();
-  const [treasuryAddress, setTreasuryAddress] = useState(TREASURY_ADDRESS);
 
   // 🔥 WALLET HOOK
   const { address, logout } = useWallet();
@@ -115,17 +108,6 @@ export default function MainLayout() {
                   🔑 {shortAddr}
                 </Button>
 
-                <Tooltip label="Cấu hình ví nhận tiền">
-                  <ActionIcon
-                    variant="light"
-                    radius="md"
-                    size="sm"
-                    onClick={openConfig}
-                  >
-                    <Settings size={18} />
-                  </ActionIcon>
-                </Tooltip>
-
                 <Button
                   radius="md"
                   size="sm"
@@ -181,7 +163,7 @@ export default function MainLayout() {
 
         <NavItem label="Trang chủ" to="/" active={pathname === "/"} />
         <NavItem label="Game" to="/game" active={pathname === "/game"} />
-        <NavItem label="Lịch sử giao dịch" to="/reward" active={pathname === "/reward"} />
+        <NavItem label="Nhận thưởng" to="/reward" active={pathname === "/reward"} />
       </AppShell.Navbar>
 
       {/* ================= CONTENT ================= */}
@@ -198,16 +180,6 @@ export default function MainLayout() {
           </motion.div>
         </AnimatePresence>
       </AppShell.Main>
-          {/* ================= CONFIG MODAL ================= */}
-          <ConfigModal
-            opened={configOpened}
-            onClose={closeConfig}
-            currentAddress={treasuryAddress}
-            onSave={(newAddress) => {
-              setTreasuryAddress(newAddress);
-              localStorage.setItem("treasuryAddress", newAddress);
-            }}
-          />
     </AppShell>
   );
 }

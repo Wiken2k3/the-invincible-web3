@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { games } from "./games.config";
 
-const MotionLink = motion(Link);
+const MotionDiv = motion.div;
 
 export default function GameHub() {
   return (
@@ -13,26 +13,31 @@ export default function GameHub() {
       <Grid>
         {games.map((game) => (
           <Grid.Col span={{ base: 12, sm: 6, md: 4 }} key={game.key}>
-            <MotionLink
+            <Link 
               to={game.path}
-              whileHover={{ scale: 1.06 }}
-              transition={{ type: "spring", stiffness: 300 }}
-              style={{
-                background: "rgba(255,255,255,0.05)",
-                border: "1px solid rgba(255,255,255,0.1)",
-                borderRadius: 20,
-                color: "white",
-                textDecoration: "none",
-                cursor: "pointer",
-                padding: 16,
-                display: "block",
-              }}
+              style={{ textDecoration: "none" }}
             >
-              <Title order={3}>{game.name}</Title>
-              <Text mt="sm" c="gray.4">
-                Click để chơi
-              </Text>
-            </MotionLink>
+              <MotionDiv
+                whileHover={{ scale: 1.06 }}
+                transition={{ type: "spring", stiffness: 300 }}
+              >
+                <Card
+                  style={{
+                    background: "rgba(255,255,255,0.05)",
+                    border: "1px solid rgba(255,255,255,0.1)",
+                    borderRadius: 20,
+                    color: "white",
+                    cursor: "pointer",
+                    height: "100%",
+                  }}
+                >
+                  <Title order={3}>{game.name}</Title>
+                  <Text mt="sm" c="gray.4">
+                    Click để chơi
+                  </Text>
+                </Card>
+              </MotionDiv>
+            </Link>
           </Grid.Col>
         ))}
       </Grid>

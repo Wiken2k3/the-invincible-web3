@@ -7,7 +7,7 @@ import GameHub from "../pages/GameHub/GameHub";
 
 import HorseRace from "../pages/Game/HorseRace/HorseRace";
 import Dice from "../pages/Game/Dice/Dice";
-import WheelSpin from "../pages/Game/Wheel/WheelSpin";
+import Wheel from "../pages/Game/Wheel/Wheel";
 import TaiXiu from "../pages/Game/TaiXiu/TaiXiu";
 import Tower from "../pages/Game/Tower/Tower";
 import Mine from "../pages/Game/Mine/Mines";
@@ -22,7 +22,7 @@ export const router = createBrowserRouter([
 
       { path: "/game/horse-race", element: <HorseRace /> },
       { path: "/game/dice", element: <Dice /> },
-      { path: "/game/wheel", element: <WheelSpin /> },
+      { path: "/game/wheel", element: <Wheel /> },
       { path: "/game/tai-xiu", element: <TaiXiu /> },
       { path: "/game/tower", element: <Tower /> },
       { path: "/game/mine", element: <Mine /> },

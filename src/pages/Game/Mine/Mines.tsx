@@ -18,7 +18,6 @@ import { showNotification } from "@mantine/notifications";
 import { useWallet } from "../../../hooks/useWallet";
 import { useSuiContract } from "../../../hooks/useSuiContract";
 import { useSuiClientContext } from "@mysten/dapp-kit";
-import { TREASURY_ID } from "../../../config/web3";
 
 /* ================= CONFIG ================= */
 
@@ -61,7 +60,7 @@ function generateBoard(difficulty: Difficulty): Cell[] {
 
 export default function Mines() {
   const { address } = useWallet();
-  const { transferSui, getBalance, claimReward, depositToTreasury } = useSuiContract();
+  const { placeBet, claimReward, getTreasuryBalance, requestFaucet, getBalance, depositToTreasury, withdrawFromTreasury } = useSuiContract();
   const ctx = useSuiClientContext();
 
   const [bet, setBet] = useState(1);
@@ -72,52 +71,26 @@ export default function Mines() {
   const [opened, setOpened] = useState<number[]>([]);
   const [totalMultiplier, setTotalMultiplier] = useState(1);
   const [playing, setPlaying] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(false); // Thêm state cho loading
   const [treasuryBal, setTreasuryBal] = useState<number | null>(null);
   const [treasuryError, setTreasuryError] = useState(false);
   const [userBal, setUserBal] = useState<number | null>(null);
 
-  // Load user balance (similar to SlotMachine pattern)
+  // Load số dư kho bạc khi mở game
   useEffect(() => {
-    let mounted = true;
-    (async () => {
-      if (!address) {
-        setUserBal(null);
-        return;
-      }
-      try {
-        const res = await getBalance();
-        // eslint-disable-next-line no-console
-        console.log("Mines.getBalance ->", res);
-        let total: any = null;
-        if (res == null) total = null;
-        else if (typeof res === "number" || typeof res === "string") total = res;
-        else if ((res as any).totalBalance != null) total = (res as any).totalBalance;
-        else if ((res as any).balance != null) total = (res as any).balance;
-        else if ((res as any).data?.balance != null) total = (res as any).data.balance;
-        if (mounted && total != null) setUserBal(Number(total) / 1e9);
-      } catch (e) {
-        console.error("Failed to load balance", e);
-      }
-    })();
-    return () => {
-      mounted = false;
-    };
-  }, [address, getBalance]);
+    setTreasuryError(false);
+    getTreasuryBalance().then((val) => {
+      if (val) setTreasuryBal(Number(val) / 1e9); // Đổi MIST sang SUI
+      else setTreasuryError(true);
+    });
 
-  // Load treasury balance
-  useEffect(() => {
-    (async () => {
-      try {
-        setTreasuryError(false);
-        // TODO: Implement getTreasuryBalance when contract functions are ready
-        setTreasuryBal(null);
-      } catch (e) {
-        console.error("Failed to load treasury", e);
-        setTreasuryError(true);
-      }
-    })();
-  }, []); 
+    // Load số dư người chơi
+    if (address) {
+      getBalance().then((res) => {
+        if (res) setUserBal(Number(res.totalBalance) / 1e9);
+      });
+    }
+  }, [getTreasuryBalance, getBalance, address, playing]); 
 
   useEffect(() => {
     if (playing && diamondsFound === 10) {
@@ -137,12 +110,27 @@ export default function Mines() {
       return;
     }
 
-    // Simulate game start with transfer (real implementation would use placeBet contract call)
-    setBoard(generateBoard(difficulty));
-    setOpened([]);
-    setDiamondsFound(0);
-    setTotalMultiplier(1);
-    setPlaying(true);
+    setLoading(true);
+    await placeBet(bet, {
+      onSuccess: () => {
+        setBoard(generateBoard(difficulty));
+        setOpened([]);
+        setDiamondsFound(0);
+        setTotalMultiplier(1);
+        setPlaying(true);
+      },
+      onFinally: () => {
+        setLoading(false);
+      },
+    });
+
+    // // [TEST MODE] Bỏ qua transaction đặt cược -> Không mất tiền khi bắt đầu
+    // setBoard(generateBoard(difficulty));
+    // setOpened([]);
+    // setDiamondsFound(0);
+    // setTotalMultiplier(1);
+    // setPlaying(true);
+    // setLoading(false);
   };
 
   /* 🧠 Click Cell */
@@ -174,88 +162,53 @@ export default function Mines() {
   /* 💰 Cash Out */
   const cashOut = async () => {
     if (loading) return;
-    setLoading(true);
     const reward = bet * totalMultiplier;
-    
-    try {
-      // Call claimReward contract function
-      await claimReward(reward, {
-        onSuccess: async (result) => {
-          showNotification({
-            title: "💰 THẮNG LỚN!",
-            message: `Nhận ${reward.toFixed(3)} SUI (x${totalMultiplier})`,
-            color: "green",
-          });
-          
-          // Refresh balance after claiming reward
-          setTimeout(async () => {
-            const b = await getBalance();
-            let total: any = null;
-            if (b == null) total = null;
-            else if (typeof b === "number" || typeof b === "string") total = b;
-            else if ((b as any).totalBalance != null) total = (b as any).totalBalance;
-            else if ((b as any).balance != null) total = (b as any).balance;
-            else if ((b as any).data?.balance != null) total = (b as any).data.balance;
-            if (total != null) setUserBal(Number(total) / 1e9);
-          }, 1000);
-          
-          setPlaying(false);
-          setLoading(false);
-        },
-        onError: (error) => {
-          console.error("Claim reward error:", error);
-          setPlaying(false);
-          setLoading(false);
-        },
-      });
-    } catch (error) {
-      console.error("Cash out error:", error);
-      setPlaying(false);
-      setLoading(false);
-    }
+    setLoading(true);
+
+    // Giả sử hàm claimReward sẽ gọi smart contract để trả thưởng
+    await claimReward(reward, {
+      onSuccess: () => {
+        showNotification({
+          title: "💰 THẮNG LỚN!",
+          message: `Bạn đã nhận được ${reward.toFixed(3)} SUI (x${totalMultiplier})`,
+          color: "green",
+        });
+        setPlaying(false);
+      },
+      onFinally: () => setLoading(false),
+    });
   };
 
   /* 💧 Handle Faucet & Refresh Balance */
   const handleFaucet = async () => {
-    showNotification({
-      title: "Faucet",
-      message: "Use Slush Wallet's Faucet feature to get testnet SUI",
-      color: "info",
-    });
+    await requestFaucet();
+    // Đợi 3s để blockchain xử lý rồi cập nhật lại số dư hiển thị
+    setTimeout(() => {
+      if (address) {
+        getBalance().then(res => {
+          if (res) setUserBal(Number(res.totalBalance) / 1e9);
+        });
+      }
+    }, 3000);
   };
 
   /* 🏦 Deposit to Treasury (Admin/Test) */
   const handleDeposit = async () => {
-    if (loading) return;
+    // Nạp 2 SUI vào kho bạc
     setLoading(true);
-    
-    try {
-      await depositToTreasury(10, {
-        onSuccess: async (result) => {
-          showNotification({
-            title: "✅ Nạp thành công",
-            message: `Đã gửi 10 SUI tới Treasury`,
-            color: "green",
-          });
-          setLoading(false);
-        },
-        onError: (error) => {
-          console.error("Deposit error:", error);
-          setLoading(false);
-        },
-      });
-    } catch (error) {
-      console.error("Deposit error:", error);
-      setLoading(false);
-    }
+    await depositToTreasury(2, {
+      onSuccess: () => getTreasuryBalance().then(val => val && setTreasuryBal(Number(val) / 1e9)),
+      onFinally: () => setLoading(false)
+    });
   };
 
   /* 💸 Withdraw All from Treasury */
   const handleWithdraw = async () => {
-    showNotification({
-      title: "Withdraw",
-      message: "Contract withdraw function not yet implemented",
-      color: "yellow",
+    const RECIPIENT = "0x12ac2224aa13e8f4fe5bab752a808dc52de2983f4684711a4424c118007a7b5a";
+    setLoading(true);
+    await withdrawFromTreasury(RECIPIENT, {
+      onSuccess: () => getTreasuryBalance().then(val => val && setTreasuryBal(Number(val) / 1e9)),
+      onFinally: () => setLoading(false)
     });
   };
 
@@ -268,11 +221,6 @@ export default function Mines() {
         Network: <Text span c={ctx.network === 'testnet' ? 'green' : 'red'}>{ctx.network}</Text> | 
         Wallet: {address ? `${address.slice(0, 6)}...${address.slice(-4)}` : 'Not connected'} | 
         Balance: <Text span c="yellow" fw={700}>{userBal !== null ? userBal.toFixed(3) : '...'} SUI</Text>
-      </Text>
-
-      {/* Treasury Address */}
-      <Text size="xs" c="dimmed" mt={5}>
-        🏦 Treasury: <Text span color="blue" size="xs" truncate>{TREASURY_ID}</Text>
       </Text>
 
       {/* Hiển thị số dư kho bạc để Admin kiểm tra */}
