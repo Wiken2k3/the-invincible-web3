@@ -110,27 +110,29 @@ export default function Mines() {
       return;
     }
 
-    setLoading(true);
-    await placeBet(bet, {
-      onSuccess: () => {
-        setBoard(generateBoard(difficulty));
-        setOpened([]);
-        setDiamondsFound(0);
-        setTotalMultiplier(1);
-        setPlaying(true);
-      },
-      onFinally: () => {
-        setLoading(false);
-      },
-    });
+    if (userBal !== null && userBal < bet) {
+      showNotification({ title: "Không đủ SUI", message: "Số dư không đủ để đặt cược", color: "red" });
+      return;
+    }
 
-    // // [TEST MODE] Bỏ qua transaction đặt cược -> Không mất tiền khi bắt đầu
-    // setBoard(generateBoard(difficulty));
-    // setOpened([]);
-    // setDiamondsFound(0);
-    // setTotalMultiplier(1);
-    // setPlaying(true);
-    // setLoading(false);
+    setLoading(true);
+    try {
+      await placeBet(bet, {
+        onSuccess: () => {
+          setBoard(generateBoard(difficulty));
+          setOpened([]);
+          setDiamondsFound(0);
+          setTotalMultiplier(1);
+          setPlaying(true);
+        },
+      });
+    } catch (e: any) {
+      if (e?.message?.includes("Balance of gas object")) {
+        showNotification({ title: "Lỗi Gas", message: "Ví thiếu coin lớn để trả gas. Hãy Faucet thêm!", color: "orange" });
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   /* 🧠 Click Cell */
@@ -165,18 +167,37 @@ export default function Mines() {
     const reward = bet * totalMultiplier;
     setLoading(true);
 
-    // Giả sử hàm claimReward sẽ gọi smart contract để trả thưởng
-    await claimReward(reward, {
-      onSuccess: () => {
-        showNotification({
-          title: "💰 THẮNG LỚN!",
-          message: `Bạn đã nhận được ${reward.toFixed(3)} SUI (x${totalMultiplier})`,
-          color: "green",
-        });
-        setPlaying(false);
-      },
-      onFinally: () => setLoading(false),
-    });
+    try {
+      // Check Treasury Balance first
+      const tBal = await getTreasuryBalance();
+      const tSui = tBal ? Number(tBal) / 1e9 : 0;
+      
+      if (tSui < reward) {
+        showNotification({ title: "Lỗi trả thưởng", message: "Kho bạc không đủ tiền. Vui lòng liên hệ Admin.", color: "red" });
+        setLoading(false);
+        return;
+      }
+
+      await claimReward(reward, {
+        onSuccess: () => {
+          showNotification({
+            title: "💰 THẮNG LỚN!",
+            message: `Bạn đã nhận được ${reward.toFixed(3)} SUI (x${totalMultiplier})`,
+            color: "green",
+          });
+          setPlaying(false);
+          setOpened(board.map((_, idx) => idx)); // Reveal all
+        },
+      });
+    } catch (e: any) {
+      if (e?.message?.includes("Balance of gas object") || e?.message?.includes("GasBudgetTooHigh")) {
+        showNotification({ title: "Lỗi Gas (Coin lẻ)", message: "Ví bạn có nhiều coin lẻ không đủ trả phí Gas. Hãy nhấn 'Faucet SUI' để lấy coin mới!", color: "orange", autoClose: 5000 });
+      } else {
+        showNotification({ title: "Lỗi nhận thưởng", message: e?.message || "Vui lòng thử lại", color: "red" });
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   /* 💧 Handle Faucet & Refresh Balance */

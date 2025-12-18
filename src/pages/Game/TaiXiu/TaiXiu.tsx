@@ -13,7 +13,6 @@ import { showNotification } from "@mantine/notifications";
 
 import { useWallet } from "../../../hooks/useWallet";
 import { useSuiContract } from "../../../hooks/useSuiContract";
-import { TREASURY_ADDRESS } from "../../../config/web3";
 import { rollDice } from "./taixiu.logic";
 
 type Choice = "TAI" | "XIU" | "TRIPLE";
@@ -27,14 +26,22 @@ type HistoryItem = {
 
 export default function TaiXiu() {
   const { address } = useWallet();
-  const { transferSui, claimReward, getBalance } = useSuiContract();
+  const { placeBet, claimReward, getBalance, getTreasuryBalance } = useSuiContract();
 
   const [userBal, setUserBal] = useState<number | null>(null);
+  const [treasuryBal, setTreasuryBal] = useState<number | null>(null);
 
   const [bet, setBet] = useState(1);
   const [choice, setChoice] = useState<Choice | null>(null);
   const [dice, setDice] = useState<number[]>([]);
   const [spinning, setSpinning] = useState(false);
+  
+  // 🥣 Bowl & Reveal State
+  const [isCovered, setIsCovered] = useState(false);
+  const [tempResult, setTempResult] = useState<{dice: number[], sum: number, result: Choice} | null>(null);
+  const [dragStart, setDragStart] = useState<{x: number, y: number} | null>(null);
+  const [dragOffset, setDragOffset] = useState({x: 0, y: 0});
+  const [isDragging, setIsDragging] = useState(false);
 
   useEffect(() => {
     if (address) {
@@ -45,6 +52,12 @@ export default function TaiXiu() {
       setUserBal(null);
     }
   }, [address]);
+
+  useEffect(() => {
+    getTreasuryBalance().then((val: any) => {
+      if (val) setTreasuryBal(Number(val) / 1e9);
+    });
+  }, [getTreasuryBalance]);
 
   // 🧠 NEW STATE
   const [history, setHistory] = useState<HistoryItem[]>([]);
@@ -63,7 +76,7 @@ export default function TaiXiu() {
       return;
     }
 
-    if (!choice || spinning) return;
+    if (!choice || spinning || isCovered) return;
 
     console.log("DEBUG BALANCE:", userBal, "BET:", bet);
 
@@ -78,56 +91,83 @@ export default function TaiXiu() {
     }
 
     setSpinning(true);
+    setIsCovered(true); // 🥣 Úp mâm ngay khi bấm chơi
+    setDragOffset({x: 0, y: 0});
 
-    await transferSui(TREASURY_ADDRESS, bet, {
+    await placeBet(bet, {
       onSuccess: () => {
         const result = rollDice();
         setDice(result.dice);
-
-        const win = result.result === choice;
-        const reward = win ? bet * 2 : 0;
-
-        // 📜 Update history (max 10)
-        setHistory((prev) =>
-          [
-            {
-              sum: result.sum,
-              result: result.result,
-              win,
-              reward,
-            },
-            ...prev,
-          ].slice(0, 10)
-        );
-
-        // 📊 Update statistics
-        if (result.result === "TAI") setTaiCount((c) => c + 1);
-        else if (result.result === "XIU") setXiuCount((c) => c + 1);
-
-        setTimeout(async () => {
-          if (win) {
-            try {
-              await claimReward(reward, {});
-              showNotification({
-                title: "🎉 Thắng!",
-                message: `Kết quả: ${result.sum} (${result.result}) - Nhận ${reward} SUI`,
-                color: "green",
-              });
-              getBalance().then((res: any) => res && setUserBal(Number(res.totalBalance) / 1e9));
-            } catch (e) {
-              showNotification({ title: "Lỗi nhận thưởng", message: "Vui lòng thử lại", color: "red" });
-            }
-          } else {
-            showNotification({ title: "💀 Thua", message: `Kết quả: ${result.sum} (${result.result})`, color: "red" });
-          }
-          setSpinning(false);
-        }, 1500);
+        setTempResult(result);
+        setSpinning(false);
+        // Chờ người chơi kéo mâm ra để revealResult()
       },
-      onError: () => setSpinning(false),
+      onError: () => {
+        setSpinning(false);
+        setIsCovered(false);
+      },
     });
   };
 
+  const revealResult = async () => {
+    if (!tempResult) return;
+    setIsCovered(false);
+    
+    const { result, sum } = tempResult;
+    const win = result === choice;
+    const reward = win ? bet * 2 : 0;
+
+    // 📜 Update history
+    setHistory((prev) => [{ sum, result, win, reward }, ...prev].slice(0, 10));
+
+    // 📊 Update statistics
+    if (result === "TAI") setTaiCount((c) => c + 1);
+    else if (result === "XIU") setXiuCount((c) => c + 1);
+
+    if (win) {
+      try {
+        await claimReward(reward, {});
+        showNotification({
+          title: "🎉 Thắng!",
+          message: `Kết quả: ${sum} (${result}) - Nhận ${reward} SUI`,
+          color: "green",
+        });
+        getBalance().then((res: any) => res && setUserBal(Number(res.totalBalance) / 1e9));
+        getTreasuryBalance().then((val: any) => val && setTreasuryBal(Number(val) / 1e9));
+      } catch (e) {
+        showNotification({ title: "Lỗi nhận thưởng", message: "Vui lòng thử lại", color: "red" });
+      }
+    } else {
+      showNotification({ title: "💀 Thua", message: `Kết quả: ${sum} (${result})`, color: "red" });
+    }
+    setTempResult(null);
+  };
+
+  // 🖱️ Drag Logic
+  const handleDragStart = (e: React.PointerEvent<HTMLDivElement>) => {
+    e.currentTarget.setPointerCapture(e.pointerId);
+    setDragStart({ x: e.clientX, y: e.clientY });
+    setIsDragging(true);
+  };
+
+  const handleDragMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!dragStart) return;
+    setDragOffset({ x: e.clientX - dragStart.x, y: e.clientY - dragStart.y });
+  };
+
+  const handleDragEnd = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!dragStart) return;
+    e.currentTarget.releasePointerCapture(e.pointerId);
+    
+    const dist = Math.sqrt(dragOffset.x ** 2 + dragOffset.y ** 2);
+    if (dist > 75) revealResult(); // Kéo xa > 75px thì mở
+    else setDragOffset({ x: 0, y: 0 }); // Reset
+    setDragStart(null);
+    setIsDragging(false);
+  };
+
   const totalGames = taiCount + xiuCount;
+  const DICE_CHARS = ['', '⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
 
   return (
     <Container size="md" ta="center">
@@ -147,26 +187,47 @@ export default function TaiXiu() {
           100% { box-shadow: 0 0 20px #ffb400; }
         }
 
-        .center-circle {
-          width: 140px;
-          height: 140px;
-          border-radius: 50%;
-          background: radial-gradient(circle, #111, #000);
-          color: white;
-          font-size: 52px;
-          font-weight: bold;
+        .dice-area {
+          position: relative;
+          width: 200px;
+          height: 200px;
           margin: 20px auto;
           display: flex;
           align-items: center;
           justify-content: center;
-          border: 4px solid gold;
-          animation: blink 1.2s infinite;
+          gap: 10px;
         }
 
-        @keyframes blink {
-          0% { box-shadow: 0 0 10px gold; }
-          50% { box-shadow: 0 0 40px gold; }
-          100% { box-shadow: 0 0 10px gold; }
+        .bowl {
+          position: absolute;
+          top: 0; left: 0;
+          width: 200px; height: 200px;
+          border-radius: 50%;
+          background: radial-gradient(circle at 30% 30%, #5e2c2c, #2a0a0a);
+          border: 5px solid #d4af37;
+          box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 10;
+          cursor: grab;
+          touch-action: none;
+        }
+        
+        .bowl:active { cursor: grabbing; }
+
+        .dice-display {
+          font-size: 64px;
+          color: white;
+          text-shadow: 0 0 10px gold;
+          animation: shake 0.5s infinite;
+        }
+
+        @keyframes shake {
+          0% { transform: rotate(0deg); }
+          25% { transform: rotate(5deg); }
+          75% { transform: rotate(-5deg); }
+          100% { transform: rotate(0deg); }
         }
 
         .side {
@@ -174,27 +235,55 @@ export default function TaiXiu() {
           padding: 20px;
           border-radius: 20px;
           background: linear-gradient(145deg, #0d4f7c, #06293f);
-          animation: sideGlow 2s infinite;
+          transition: all 0.3s ease;
+          border: 2px solid transparent;
+          opacity: 0.7;
         }
 
-        @keyframes sideGlow {
-          0% { box-shadow: 0 0 10px #00f; }
-          50% { box-shadow: 0 0 25px #00ffff; }
-          100% { box-shadow: 0 0 10px #00f; }
+        .side.selected {
+          opacity: 1;
+          border-color: #ffd700;
+          box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+          transform: scale(1.05);
         }
       `}</style>
 
       <div className="board">
         <Title c="yellow">🎲 TÀI XỈU ON-CHAIN</Title>
-        <Text c="dimmed" size="sm">Ví: {userBal !== null ? userBal.toFixed(3) : "..."} SUI</Text>
+        <Group justify="center" gap="xs">
+          <Text c="dimmed" size="sm">Ví: {userBal !== null ? userBal.toFixed(3) : "..."} SUI</Text>
+          <Text c="dimmed" size="sm">|</Text>
+          <Text c="dimmed" size="sm">Treasury: {treasuryBal !== null ? treasuryBal.toFixed(2) : "..."} SUI</Text>
+        </Group>
 
-        <div className="center-circle">
-          {dice.length ? sum : "--"}
+        <div className="dice-area">
+          {/* 🎲 DICE */}
+          <div className="dice-display" style={{ animation: spinning ? 'shake 0.2s infinite' : 'none' }}>
+             {dice.length > 0 ? dice.map((d, i) => (
+               <span key={i}>{DICE_CHARS[d]}</span>
+             )) : "🎲🎲🎲"}
+          </div>
+
+          {/* 🥣 BOWL (MÂM) */}
+          {isCovered && (
+            <div 
+              className="bowl"
+              onPointerDown={handleDragStart}
+              onPointerMove={handleDragMove}
+              onPointerUp={handleDragEnd}
+              style={{ 
+                transform: `translate(${dragOffset.x}px, ${dragOffset.y}px)`,
+                transition: isDragging ? 'none' : 'transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
+              }}
+            >
+              <Text size="xl" fw={900} c="yellow">KÉO MỞ</Text>
+            </div>
+          )}
         </div>
 
         {/* TAI / XIU */}
         <Group justify="space-between" mt="xl">
-          <div className="side">
+          <div className={`side ${choice === "TAI" ? "selected" : ""}`}>
             <Title order={3} c="white">TÀI</Title>
             <Text c="gray">11 – 17</Text>
             <Button
@@ -207,7 +296,7 @@ export default function TaiXiu() {
             </Button>
           </div>
 
-          <div className="side">
+          <div className={`side ${choice === "XIU" ? "selected" : ""}`}>
             <Title order={3} c="white">XỈU</Title>
             <Text c="gray">4 – 10</Text>
             <Button
@@ -233,12 +322,12 @@ export default function TaiXiu() {
         <Button
           mt="lg"
           size="lg"
-          loading={spinning}
-          disabled={!choice}
+          loading={spinning && !isCovered}
+          disabled={!choice || isCovered}
           onClick={onPlay}
           fullWidth
         >
-          🎰 PLAY
+          {isCovered ? "👇 KÉO MÂM RA 👇" : "🎰 PLAY"}
         </Button>
 
         <Divider my="lg" />
