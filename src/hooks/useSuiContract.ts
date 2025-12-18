@@ -189,7 +189,7 @@ export function useSuiContract() {
    */
   const placeBet = useCallback(
     async (amount: number, options?: any) => {
-      if (!account) return;
+      if (!account) return Promise.reject(new Error('No account'));
       try {
         const tx = new Transaction();
         const amountMist = BigInt(Math.round(amount * 1_000_000_000));
@@ -269,26 +269,30 @@ export function useSuiContract() {
           arguments: [tx.object(TREASURY_ID), coin],
         });
 
-        signAndExecute(
-          { transaction: tx },
-          {
-            onSuccess: (result) => {
-              options?.onSuccess?.(result);
-            },
-            onError: (error) => {
-              const msg = error.message;
-              if (msg.includes("does not exist") || msg.includes("ObjectNotFound")) {
-                showNotification({ title: "Sai mạng lưới", message: "Không tìm thấy Contract. Hãy chuyển ví sang Testnet!", color: "orange" });
-              } else if (msg.includes("No valid gas coins")) {
-                showNotification({ title: "Lỗi Coin lẻ", message: "Ví bạn có nhiều coin lẻ không đủ trả gas. Hãy thử Faucet thêm để gộp coin!", color: "red" });
-              } else {
-                showNotification({ title: "Lỗi đặt cược", message: msg, color: "red" });
-              }
-              options?.onError?.(error);
-            },
-            onSettled: options?.onFinally,
-          }
-        );
+        return new Promise((resolve, reject) => {
+          signAndExecute(
+            { transaction: tx },
+            {
+              onSuccess: (result) => {
+                options?.onSuccess?.(result);
+                resolve(result);
+              },
+              onError: (error) => {
+                const msg = error.message;
+                if (msg.includes("does not exist") || msg.includes("ObjectNotFound")) {
+                  showNotification({ title: "Sai mạng lưới", message: "Không tìm thấy Contract. Hãy chuyển ví sang Testnet!", color: "orange" });
+                } else if (msg.includes("No valid gas coins")) {
+                  showNotification({ title: "Lỗi Coin lẻ", message: "Ví bạn có nhiều coin lẻ không đủ trả gas. Hãy thử Faucet thêm để gộp coin!", color: "red" });
+                } else {
+                  showNotification({ title: "Lỗi đặt cược", message: msg, color: "red" });
+                }
+                options?.onError?.(error);
+                reject(error);
+              },
+              onSettled: options?.onFinally,
+            }
+          );
+        });
       } catch (err) {
         console.error(err);
         if (err instanceof Error) {
@@ -299,6 +303,7 @@ export function useSuiContract() {
           });
         }
         options?.onFinally?.();
+        return Promise.reject(err);
       }
     },
     [account, signAndExecute, suiClient]
@@ -309,34 +314,73 @@ export function useSuiContract() {
    */
   const claimReward = useCallback(
     async (amount: number, options?: any) => {
-      if (!account) return;
+      if (!account) return Promise.reject(new Error('No account'));
       try {
         const tx = new Transaction();
+
+        // --- TỐI ƯU HÓA GAS & COIN (giống placeBet) ---
+        try {
+          const allCoins = [];
+          let cursor = null;
+          do {
+            const response = await suiClient.getCoins({
+              owner: account.address,
+              coinType: "0x2::sui::SUI",
+              cursor,
+            });
+            allCoins.push(...response.data);
+            cursor = response.nextCursor;
+          } while (cursor);
+
+          const sortedCoins = allCoins.sort((a, b) => Number(BigInt(b.balance) - BigInt(a.balance)));
+          const GAS_BUDGET = 50_000_000n; // 0.05 SUI
+          // Choose gas coins to cover minimal gas budget
+          let currentSum = 0n;
+          const gasCoins = [];
+          const totalNeeded = GAS_BUDGET;
+          for (const coin of sortedCoins) {
+            if (currentSum >= totalNeeded) break;
+            gasCoins.push(coin);
+            currentSum += BigInt(coin.balance);
+          }
+          if (currentSum >= totalNeeded && gasCoins.length > 0) {
+            tx.setGasPayment(gasCoins.map(c => ({ objectId: c.coinObjectId, version: c.version, digest: c.digest })));
+          }
+          tx.setGasBudget(Number(GAS_BUDGET));
+        } catch (e) {
+          console.warn('ClaimReward: coin optimization failed', e);
+        }
+
         // Gọi hàm claim_reward
         tx.moveCall({
           target: `${PACKAGE_ID}::mines::claim_reward`,
           arguments: [
-            tx.object(TREASURY_ID), 
-            tx.pure.u64(Math.floor(amount * 1e9)) // Convert SUI to MIST
+            tx.object(TREASURY_ID),
+            tx.pure.u64(Math.floor(amount * 1e9)), // Convert SUI to MIST
           ],
         });
 
-        signAndExecute(
-          { transaction: tx },
-          {
-            onSuccess: (result) => {
-              options?.onSuccess?.(result);
-            },
-            onError: (error) => {
-              showNotification({ title: "Lỗi nhận thưởng", message: error.message, color: "red" });
-              options?.onError?.(error);
-            },
-            onSettled: options?.onFinally,
-          }
-        );
+        return new Promise((resolve, reject) => {
+          signAndExecute(
+            { transaction: tx },
+            {
+              onSuccess: (result) => {
+                options?.onSuccess?.(result);
+                resolve(result);
+              },
+              onError: (error) => {
+                showNotification({ title: "Lỗi nhận thưởng", message: error.message, color: "red" });
+                options?.onError?.(error);
+                reject(error);
+              },
+              onSettled: options?.onFinally,
+            }
+          );
+        });
       } catch (err) {
         console.error(err);
         options?.onFinally?.();
+        return Promise.reject(err);
       }
     },
     [account, signAndExecute]

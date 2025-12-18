@@ -7,9 +7,10 @@ interface ReelProps {
   finalSymbol: SymbolType | null;
   spinning: boolean;
   delay: number;
+  size?: number;
 }
 
-export default function Reel({ finalSymbol, spinning, delay }: ReelProps) {
+export default function Reel({ finalSymbol, spinning, delay, size = 90 }: ReelProps) {
   const controls = useAnimation();
   // Tạo dải băng ảo gồm 30 icon ngẫu nhiên để tạo hiệu ứng trượt dài
   const [strip] = useState(() => 
@@ -38,17 +39,17 @@ export default function Reel({ finalSymbol, spinning, delay }: ReelProps) {
 
   return (
     <div style={{ 
-      width: 90, height: 100, overflow: 'hidden', 
+      width: size, height: size + 10, overflow: 'hidden', 
       background: 'rgba(255,255,255,0.05)', borderRadius: 12, border: '1px solid #444' 
     }}>
       <motion.div animate={controls} style={{ display: 'flex', flexDirection: 'column' }}>
         {/* Kết quả thực tế sẽ nằm ở đây khi y = 0 */}
-        <div style={{ height: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 48 }}>
+        <div style={{ height: size + 10, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: Math.round(size * 0.6) }}>
           {finalSymbol?.icon || "❓"}
         </div>
         {/* Dải băng icon giả để tạo hiệu ứng thị giác */}
         {strip.map((s, i) => (
-          <div key={i} style={{ height: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 48 }}>
+          <div key={i} style={{ height: size + 10, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: Math.round(size * 0.6) }}>
             {s.icon}
           </div>
         ))}

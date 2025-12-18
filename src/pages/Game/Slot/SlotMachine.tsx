@@ -1,15 +1,16 @@
-import { Container, Button, Group, Title, NumberInput, Paper, Stack, Text } from "@mantine/core";
+import { Container, Button, Group, Title, NumberInput, Paper, Stack, Text, SegmentedControl, Table } from "@mantine/core";
 import { useEffect, useState } from "react";
 import { showNotification } from "@mantine/notifications";
 import Reel from "./Reel";
 import { spinReels } from "./slot.logic";
+import { SYMBOLS } from "./symbols";
 import { useWallet } from "../../../hooks/useWallet";
 import { useSuiContract } from "../../../hooks/useSuiContract";
 import { useSuiClientContext } from "@mysten/dapp-kit";
 
 export default function SlotMachine() {
   const { address } = useWallet();
-  const { placeBet, claimReward, getBalance, requestFaucet, isPending } = useSuiContract();
+  const { placeBet, claimReward, getBalance, requestFaucet, getTreasuryBalance, isPending } = useSuiContract();
   const ctx = useSuiClientContext();
 
   const [userBal, setUserBal] = useState<number | null>(null);
@@ -17,6 +18,7 @@ export default function SlotMachine() {
   const [bet, setBet] = useState(1);
   const [reelsData, setReelsData] = useState<any[] | null>(null);
   const [spinning, setSpinning] = useState(false);
+  const [columns, setColumns] = useState<3 | 5>(3);
 
   const onSpin = async () => {
     if (!address) {
@@ -24,54 +26,63 @@ export default function SlotMachine() {
       return;
     }
 
-    // Reset UI and start spinning animation while tx is pending
-    setSpinning(true);
+    // Reset UI
     setReelsData(null);
 
-    // Place bet on-chain first (locks player's bet in Treasury)
-    await placeBet(bet, {
-      onSuccess: () => {
-        // Determine result locally (server/contract should verify in production)
-        const result = spinReels();
+    try {
+      // Wait for on-chain bet to succeed
+      await placeBet(bet, {
+        onError: (err: Error) => showNotification({ title: 'Lỗi đặt cược', message: err.message, color: 'red' }),
+      });
 
-        // Small initial delay so user sees spinning
-        setTimeout(() => {
-          setReelsData(result.reels);
-          setSpinning(false);
+      // Payment done — start spinning animation
+      setSpinning(true);
 
-          // After reels stop, show notification and if win, claim reward
-          setTimeout(async () => {
-            if (result.isWin) {
-              const reward = Number((bet * result.payout).toFixed(9));
-              // Call contract to pay out reward back to player
-              await claimReward(reward, {
-                onSuccess: () => {
-                  showNotification({
-                    title: "🎊 CHIẾN THẮNG!",
-                    message: `Bạn nhận được ${ (bet * result.payout).toFixed(3) } SUI`,
-                    color: "green",
-                  });
-                  // Refresh balance after reward
-                  if (address) {
-                    getBalance().then((res) => {
-                      if (res) setUserBal(Number(res.totalBalance) / 1e9);
-                    });
-                  }
-                },
-                onError: (err: Error) => {
-                  showNotification({ title: "Lỗi trả thưởng", message: err.message, color: "red" });
-                },
-              });
-            } else {
-              showNotification({ title: "Thua", message: "Chúc may mắn lần sau!", color: "gray" });
-            }
-          }, 2500);
-        }, 500);
-      },
-      onError: () => {
+      // Determine result locally (server/contract should verify in production)
+      const result = spinReels(columns);
+
+      // Small initial delay so user sees spinning
+      setTimeout(() => {
+        setReelsData(result.reels);
         setSpinning(false);
-      },
-    });
+
+        // After reels stop, show notification and if win, claim reward
+        setTimeout(async () => {
+            if (result.win) {
+            const reward = Number((bet * result.multiplier).toFixed(9));
+            try {
+              // Check treasury has enough balance before claiming
+              const treasuryBal = await getTreasuryBalance();
+              const treasurySui = treasuryBal ? Number(treasuryBal) / 1e9 : 0;
+              if (treasuryBal === null || BigInt(Math.floor((treasurySui) * 1e9)) < BigInt(Math.floor(reward * 1e9))) {
+                showNotification({ title: "Lỗi trả thưởng", message: "Treasury không đủ tiền để trả thưởng. Vui lòng thử lại sau hoặc liên hệ admin.", color: "red" });
+              } else {
+                await claimReward(reward, {});
+              showNotification({
+                title: "🎊 CHIẾN THẮNG!",
+                message: `Bạn nhận được ${ (bet * result.multiplier).toFixed(3) } SUI (x${result.multiplier})`,
+                color: "green",
+              });
+              // Refresh balance after reward
+              if (address) {
+                getBalance().then((res) => {
+                  if (res) setUserBal(Number(res.totalBalance) / 1e9);
+                });
+              }
+              }
+            } catch (err: any) {
+              showNotification({ title: "Lỗi trả thưởng", message: err?.message || String(err), color: "red" });
+            }
+          } else {
+            showNotification({ title: "Thua", message: "Chúc may mắn lần sau!", color: "gray" });
+          }
+        }, 2500);
+      }, 500);
+    } catch (err: any) {
+      // placeBet rejected
+      showNotification({ title: 'Đặt cược thất bại', message: err?.message || String(err), color: 'red' });
+      setSpinning(false);
+    }
   };
 
   // Load user balance and refresh after pending txs settle
@@ -103,17 +114,18 @@ export default function SlotMachine() {
           <Title order={2} c="yellow" style={{ textShadow: '0 0 10px gold' }}>🎰 SUI SLOTS</Title>
 
           <Group gap="xs" justify="center">
-            {[0, 1, 2].map((i) => (
-              <Reel 
-                key={i} 
-                spinning={spinning} 
-                finalSymbol={reelsData ? reelsData[i] : null} 
-                delay={i * 0.4} // Hiệu ứng cột 1 dừng trước, cột 3 dừng sau
+            {Array.from({ length: columns }).map((_, i) => (
+              <Reel
+                key={i}
+                spinning={spinning}
+                finalSymbol={reelsData ? reelsData[i] : null}
+                delay={i * 0.25}
+                size={columns === 3 ? 90 : 64}
               />
             ))}
           </Group>
 
-          <Group position="apart" w="100%">
+          <Group justify="space-between" w="100%">
             <Text size="xs" c="dimmed">
               Network: <Text span c={ctx.network === 'testnet' ? 'green' : 'red'}>{ctx.network}</Text>
             </Text>
@@ -124,7 +136,7 @@ export default function SlotMachine() {
               {userBal !== null ? `${userBal.toFixed(3)} SUI` : '...'}
             </Text>
           </Group>
-          <Group w="100%" position="right">
+          <Group w="100%" justify="flex-end">
             <Button size="xs" variant="subtle" onClick={handleFaucet}>💧 Faucet</Button>
           </Group>
 
@@ -135,6 +147,36 @@ export default function SlotMachine() {
             onChange={(v) => setBet(Number(v))}
             w="100%"
           />
+
+          <SegmentedControl
+            value={String(columns)}
+            onChange={(v) => setColumns(v === '5' ? 5 : 3)}
+            data={[{ label: '3 Cột', value: '3' }, { label: '5 Cột', value: '5' }]}
+            fullWidth
+          />
+
+          {/* Payout table */}
+          <Table highlightOnHover withColumnBorders striped>
+            <thead>
+              <tr>
+                <th>Icon</th>
+                <th>Symbol</th>
+                {columns === 3 ? <th>2-match (x)</th> : <th>3-match (x)</th>}
+                {columns === 3 ? <th>3-match (x)</th> : <><th>4-match (x)</th><th>5-match (x)</th></>}
+              </tr>
+            </thead>
+            <tbody>
+              {/** Populate rows by mapping SYMBOLS */}
+              {SYMBOLS.map((s, idx) => (
+                <tr key={idx}>
+                  <td style={{ fontSize: 20 }}>{s.icon}</td>
+                  <td>{s.id}</td>
+                  {columns === 3 ? <td>{(s.multiplier * 0.5).toFixed(2)}</td> : <td>{(s.multiplier * 0.5).toFixed(2)}</td>}
+                  {columns === 3 ? <td>{(s.multiplier).toFixed(2)}</td> : <><td>{(s.multiplier * 1.5).toFixed(2)}</td><td>{(s.multiplier * 3).toFixed(2)}</td></>}
+                </tr>
+              ))}
+            </tbody>
+          </Table>
 
           <Button
             fullWidth
