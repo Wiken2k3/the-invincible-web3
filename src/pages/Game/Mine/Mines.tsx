@@ -3,7 +3,6 @@ import {
   Button,
   Card,
   Group,
-  Grid,
   NumberInput,
   Text,
   Title,
@@ -11,27 +10,30 @@ import {
   Stack,
   Flex,
   ThemeIcon,
+  SimpleGrid,
+  Badge,
 } from "@mantine/core";
 import { useState, useEffect } from "react";
 import { showNotification } from "@mantine/notifications";
 
 import { useWallet } from "../../../hooks/useWallet";
 import { useSuiContract } from "../../../hooks/useSuiContract";
-import { useSuiClientContext } from "@mysten/dapp-kit";
+import { IconRefresh, IconDiamond, IconBomb } from "@tabler/icons-react";
 
 /* ================= CONFIG ================= */
 
 const GRID_SIZE = 64;
 
 type Difficulty = "easy" | "medium" | "hard";
+type GameState = "setup" | "playing" | "gameover" | "win";
 
 const DIFFICULTY_CONFIG: Record<
   Difficulty,
   { mines: number; empty: number; gems: number; min: number; max: number }
 > = {
-  easy: { mines: 24, empty: 30, gems: 10, min: 1.1, max: 2.0 },
+  easy: { mines: 12, empty: 42, gems: 10, min: 1.1, max: 2.0 },
   medium: { mines: 30, empty: 24, gems: 10, min: 1.5, max: 4.0 },
-  hard: { mines: 42, empty: 12, gems: 10, min: 2.5, max: 10.0 },
+  hard: { mines: 42, empty: 12, gems: 10, min: 2.5, max: 8.0 },
 };
 
 type Cell =
@@ -60,8 +62,7 @@ function generateBoard(difficulty: Difficulty): Cell[] {
 
 export default function Mines() {
   const { address } = useWallet();
-  const { placeBet, claimReward, getTreasuryBalance, requestFaucet, getBalance, depositToTreasury, withdrawFromTreasury } = useSuiContract();
-  const ctx = useSuiClientContext();
+  const { placeBet, claimReward, getTreasuryBalance, requestFaucet, getBalance } = useSuiContract();
 
   const [bet, setBet] = useState(1);
   const [difficulty, setDifficulty] = useState<Difficulty>("easy");
@@ -70,7 +71,7 @@ export default function Mines() {
   const [board, setBoard] = useState<Cell[]>([]);
   const [opened, setOpened] = useState<number[]>([]);
   const [totalMultiplier, setTotalMultiplier] = useState(1);
-  const [playing, setPlaying] = useState(false);
+  const [gameState, setGameState] = useState<GameState>("setup");
   const [loading, setLoading] = useState(false); // Thêm state cho loading
   const [treasuryBal, setTreasuryBal] = useState<number | null>(null);
   const [treasuryError, setTreasuryError] = useState(false);
@@ -90,16 +91,16 @@ export default function Mines() {
         if (res) setUserBal(Number(res.totalBalance) / 1e9);
       });
     }
-  }, [getTreasuryBalance, getBalance, address, playing]); 
+  }, [getTreasuryBalance, getBalance, address, gameState]);
 
   const jackpotValue = treasuryBal ? (treasuryBal * 0.5) : 0;
 
   useEffect(() => {
-    if (playing && diamondsFound === 10) {
+    if (gameState === "playing" && diamondsFound === 10) {
       // Tự động cash out khi tìm thấy hết kim cương
       cashOut();
     }
-  }, [opened, playing]); // Bỏ bớt dependency không cần thiết
+  }, [opened, gameState, diamondsFound]);
 
   /* ▶️ Start Game */
   const startGame = async () => {
@@ -112,34 +113,24 @@ export default function Mines() {
       return;
     }
 
-    if (userBal !== null && userBal < bet) {
-      showNotification({ title: "Không đủ SUI", message: "Số dư không đủ để đặt cược", color: "red" });
-      return;
-    }
-
     setLoading(true);
-    try {
-      await placeBet(bet, {
-        onSuccess: () => {
-          setBoard(generateBoard(difficulty));
-          setOpened([]);
-          setDiamondsFound(0);
-          setTotalMultiplier(1);
-          setPlaying(true);
-        },
-      });
-    } catch (e: any) {
-      if (e?.message?.includes("Balance of gas object")) {
-        showNotification({ title: "Lỗi Gas", message: "Ví thiếu coin lớn để trả gas. Hãy Faucet thêm!", color: "orange" });
-      }
-    } finally {
-      setLoading(false);
-    }
+    await placeBet(bet, {
+      onSuccess: () => {
+        setBoard(generateBoard(difficulty));
+        setOpened([]);
+        setDiamondsFound(0);
+        setTotalMultiplier(1);
+        setGameState("playing");
+      },
+      onFinally: () => {
+        setLoading(false);
+      },
+    });
   };
 
   /* 🧠 Click Cell */
   const clickCell = (i: number) => {
-    if (!playing || opened.includes(i)) return;
+    if (gameState !== "playing" || opened.includes(i)) return;
 
     const cell = board[i];
 
@@ -149,7 +140,8 @@ export default function Mines() {
         message: "Bạn đã trúng mìn và mất toàn bộ SUI!",
         color: "red",
       });
-      setPlaying(false);
+      setOpened((prev) => [...prev, i]);
+      setGameState("gameover");
       return;
     }
 
@@ -177,39 +169,18 @@ export default function Mines() {
 
     setLoading(true);
 
-    try {
-      // Check Treasury Balance first
-      const tBal = await getTreasuryBalance();
-      const tSui = tBal ? Number(tBal) / 1e9 : 0;
-      
-      if (tSui < reward) {
-        showNotification({ title: "Lỗi trả thưởng", message: "Kho bạc không đủ tiền. Vui lòng liên hệ Admin.", color: "red" });
-        setLoading(false);
-        return;
-      }
-
-      await claimReward(reward, {
-        onSuccess: () => {
-          showNotification({
-            title: isJackpot ? "🚨 JACKPOT!!!" : "💰 THẮNG LỚN!",
-            message: isJackpot 
-              ? `Bạn trúng JACKPOT: ${reward.toFixed(3)} SUI`
-              : `Bạn đã nhận được ${reward.toFixed(3)} SUI (x${totalMultiplier})`,
-            color: "green",
-          });
-          setPlaying(false);
-          setOpened(board.map((_, idx) => idx)); // Reveal all
-        },
-      });
-    } catch (e: any) {
-      if (e?.message?.includes("Balance of gas object") || e?.message?.includes("GasBudgetTooHigh")) {
-        showNotification({ title: "Lỗi Gas (Coin lẻ)", message: "Ví bạn có nhiều coin lẻ không đủ trả phí Gas. Hãy nhấn 'Faucet SUI' để lấy coin mới!", color: "orange", autoClose: 5000 });
-      } else {
-        showNotification({ title: "Lỗi nhận thưởng", message: e?.message || "Vui lòng thử lại", color: "red" });
-      }
-    } finally {
-      setLoading(false);
-    }
+    // Giả sử hàm claimReward sẽ gọi smart contract để trả thưởng
+    await claimReward(reward, {
+      onSuccess: () => {
+        showNotification({
+          title: "💰 THẮNG LỚN!",
+          message: `Bạn đã nhận được ${reward.toFixed(3)} SUI (x${totalMultiplier})`,
+          color: "green",
+        });
+        setGameState("win");
+      },
+      onFinally: () => setLoading(false),
+    });
   };
 
   /* 💧 Handle Faucet & Refresh Balance */
@@ -225,69 +196,42 @@ export default function Mines() {
     }, 3000);
   };
 
-  /* 🏦 Deposit to Treasury (Admin/Test) */
-  const handleDeposit = async () => {
-    // Nạp 2 SUI vào kho bạc
-    setLoading(true);
-    await depositToTreasury(2, {
-      onSuccess: () => getTreasuryBalance().then(val => val && setTreasuryBal(Number(val) / 1e9)),
-      onFinally: () => setLoading(false)
-    });
-  };
-
-  /* 💸 Withdraw All from Treasury */
-  const handleWithdraw = async () => {
-    const RECIPIENT = "0x12ac2224aa13e8f4fe5bab752a808dc52de2983f4684711a4424c118007a7b5a";
-    setLoading(true);
-    await withdrawFromTreasury(RECIPIENT, {
-      onSuccess: () => getTreasuryBalance().then(val => val && setTreasuryBal(Number(val) / 1e9)),
-      onFinally: () => setLoading(false)
-    });
+  const resetGame = () => {
+    setGameState("setup");
+    setDiamondsFound(0);
+    setTotalMultiplier(1);
+    setOpened([]);
   };
 
   return (
     <Card radius="lg" p="xl" style={{ maxWidth: 600 }} mx="auto">
-      <Title order={3}>💣 Mines – SUI (Testnet)</Title>
+      <Group justify="space-between" mb="lg">
+        <Title order={3}>💣 Mines</Title>
+        <Badge 
+          size="lg" 
+          variant="gradient" 
+          gradient={{ from: 'blue', to: 'cyan' }}
+        >
+          {userBal !== null ? `${userBal.toFixed(2)} SUI` : '...'}
+        </Badge>
+      </Group>
       
-      {/* Jackpot Display */}
-      <Card p="xs" radius="md" bg="rgba(255, 215, 0, 0.1)" style={{ border: '1px solid gold', marginBottom: 10 }}>
-        <Stack gap={0} align="center">
-          <Text size="xs" c="yellow" fw={700} tt="uppercase">🔥 Jackpot (0.1%) 🔥</Text>
-          <Text size="xl" fw={900} c="yellow" style={{ textShadow: '0 0 10px orange' }}>{jackpotValue.toFixed(2)} SUI</Text>
-        </Stack>
-      </Card>
-
-      {/* Thông tin debug mạng và ví */}
-      <Text size="xs" c="dimmed" mt={5}>
-        Network: <Text span c={ctx.network === 'testnet' ? 'green' : 'red'}>{ctx.network}</Text> | 
-        Wallet: {address ? `${address.slice(0, 6)}...${address.slice(-4)}` : 'Not connected'} | 
-        Balance: <Text span c="yellow" fw={700}>{userBal !== null ? userBal.toFixed(3) : '...'} SUI</Text>
-      </Text>
-
-      {/* Hiển thị số dư kho bạc để Admin kiểm tra */}
+      {/* Treasury Info & Faucet */}
       <Group justify="space-between" mb="md">
         <Text size="xs" c="dimmed">
-          Treasury: {treasuryBal !== null 
+          🏦 Treasury: {treasuryBal !== null 
             ? `${treasuryBal.toFixed(2)} SUI` 
             : treasuryError 
               ? "Error" 
               : "Loading..."}
         </Text>
         
-        <Group gap={5}>
-          <Button variant="subtle" size="xs" onClick={handleWithdraw} color="red">
-            💸 Withdraw All
-          </Button>
-          <Button variant="subtle" size="xs" onClick={handleDeposit} color="orange">
-            🏦 Fund Treasury
-          </Button>
-          <Button variant="subtle" size="xs" onClick={handleFaucet}>
-            💧 Faucet SUI
-          </Button>
-        </Group>
+        <Button variant="subtle" size="xs" onClick={handleFaucet} leftSection={<IconRefresh size={14} />}>
+          Faucet SUI
+        </Button>
       </Group>
 
-      {!playing && (
+      {gameState === "setup" && (
         <>
           <NumberInput
             label="Bet (SUI)"
@@ -295,6 +239,7 @@ export default function Mines() {
             onChange={(v) => setBet(Number(v))}
             min={0.1}
             step={0.1}
+            size="md"
           />
 
           <Text mt="sm" size="sm" fw={500}>Difficulty</Text>
@@ -308,48 +253,59 @@ export default function Mines() {
               { label: "Hard", value: "hard" },
             ]}
             mt="sm"
+            size="md"
           />
 
-          <Button fullWidth mt="md" onClick={startGame} loading={loading}>
+          <Button fullWidth mt="xl" size="lg" onClick={startGame} loading={loading}>
             Start Game
           </Button>
         </>
       )}
 
-      {playing && (
+      {gameState !== "setup" && (
         <>
           <Flex mt="md" gap="md">
             <Box style={{ flex: 1 }}>
-              <Grid gutter={5}>
-                {Array.from({ length: GRID_SIZE }).map((_, i) => (
-                  <Grid.Col span={1.5} key={i}>
+              <SimpleGrid cols={8} spacing={5}>
+                {Array.from({ length: GRID_SIZE }).map((_, i) => {
+                  const isOpened = opened.includes(i);
+                  const isMine = board[i]?.type === "mine";
+                  const isGem = board[i]?.type === "gem";
+                  const isRevealed = (gameState === "gameover" || gameState === "win") && isMine;
+
+                  return (
                     <Button
+                      key={i}
                       fullWidth
-                      h={42}
+                      h={45}
                       p={0}
-                      variant={opened.includes(i) ? "filled" : "outline"}
+                      variant={isOpened || isRevealed ? "filled" : "default"}
                       color={
-                        opened.includes(i)
-                          ? board[i].type === "gem"
-                            ? "green"
-                            : board[i].type === "mine"
-                            ? "red"
-                            : "gray"
-                          : "gray"
+                        isOpened
+                          ? isMine ? "red" : "gray"
+                          : isRevealed ? "red.3" : "gray"
                       }
                       onClick={() => clickCell(i)}
+                      disabled={gameState !== "playing" && !isOpened}
+                      styles={{
+                        root: {
+                          backgroundColor: isOpened && !isMine ? "black" : undefined,
+                          borderColor: isOpened && !isMine ? "black" : undefined,
+                          transition: "all 0.2s",
+                        }
+                      }}
                     >
-                      {opened.includes(i)
-                        ? board[i].type === "gem"
-                          ? "💎"
-                          : board[i].type === "mine"
-                          ? "�"
-                          : ""
-                        : "?"}
+                      {isOpened ? (
+                        isGem ? <IconDiamond size={20} color="cyan" /> : isMine ? <IconBomb size={20} /> : ""
+                      ) : isRevealed ? (
+                        <IconBomb size={16} />
+                      ) : (
+                        ""
+                      )}
                     </Button>
-                  </Grid.Col>
-                ))}
-              </Grid>
+                  );
+                })}
+              </SimpleGrid>
             </Box>
 
             {/* Progress Bar 10 steps */}
@@ -362,10 +318,10 @@ export default function Mines() {
                     key={step}
                     variant={active ? "filled" : "light"}
                     color={active ? "green" : "gray"}
-                    size="sm"
+                    size="xs"
                     radius="xl"
                   >
-                    <Text size="xs">{step}</Text>
+                    <Text style={{ fontSize: 8 }}>{step}</Text>
                   </ThemeIcon>
                 );
               })}
@@ -373,11 +329,20 @@ export default function Mines() {
             </Stack>
           </Flex>
 
-          <Text mt="sm">Total Multiplier: x{totalMultiplier}</Text>
+          <Group justify="space-between" mt="md">
+            <Text fw={700} size="lg">x{totalMultiplier}</Text>
+            <Text c="dimmed" size="sm">Potential Win: {(bet * totalMultiplier).toFixed(3)} SUI</Text>
+          </Group>
 
-          <Button fullWidth mt="md" color="yellow" onClick={cashOut} loading={loading}>
-            Cash Out
-          </Button>
+          {gameState === "playing" ? (
+            <Button fullWidth mt="md" size="md" color="green" onClick={cashOut} loading={loading} disabled={diamondsFound === 0}>
+              Cash Out
+            </Button>
+          ) : (
+            <Button fullWidth mt="md" size="md" variant="outline" onClick={resetGame}>
+              Play Again
+            </Button>
+          )}
         </>
       )}
     </Card>
