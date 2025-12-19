@@ -387,6 +387,67 @@ export function useSuiContract() {
   );
 
   /**
+   * Claim Winnings: Gọi smart contract để nhận thưởng từ các game (VD: Đua ngựa)
+   */
+  const claimWinnings = useCallback(
+    async (amount: number, options?: any) => {
+      if (!account) return Promise.reject(new Error('No account'));
+      try {
+        const tx = new Transaction();
+
+        // --- TỐI ƯU HÓA GAS & COIN (giống các hàm khác) ---
+        try {
+          const allCoins = [];
+          let cursor = null;
+          do {
+            const response = await suiClient.getCoins({
+              owner: account.address,
+              coinType: "0x2::sui::SUI",
+              cursor,
+            });
+            allCoins.push(...response.data);
+            cursor = response.nextCursor;
+          } while (cursor);
+
+          const sortedCoins = allCoins.sort((a, b) => Number(BigInt(b.balance) - BigInt(a.balance)));
+          const GAS_BUDGET = 50_000_000n; // 0.05 SUI
+          let currentSum = 0n;
+          const gasCoins = [];
+          const totalNeeded = GAS_BUDGET;
+          for (const coin of sortedCoins) {
+            if (currentSum >= totalNeeded) break;
+            gasCoins.push(coin);
+            currentSum += BigInt(coin.balance);
+          }
+          if (currentSum >= totalNeeded && gasCoins.length > 0) {
+            tx.setGasPayment(gasCoins.map(c => ({ objectId: c.coinObjectId, version: c.version, digest: c.digest })));
+          }
+          tx.setGasBudget(Number(GAS_BUDGET));
+        } catch (e) {
+          console.warn('claimWinnings: coin optimization failed', e);
+        }
+
+        // TODO: Thay 'horse_race::claim_winnings' bằng module và function tương ứng trên smart contract của bạn
+        tx.moveCall({
+          target: `${PACKAGE_ID}::horse_race::claim_winnings`,
+          arguments: [
+            tx.object(TREASURY_ID),
+            tx.pure.u64(Math.floor(amount * 1e9)), // Convert SUI to MIST
+          ],
+        });
+
+        return new Promise((resolve, reject) => {
+          signAndExecute(
+            { transaction: tx },
+            { onSuccess: (result) => { options?.onSuccess?.(result); resolve(result); }, onError: (error) => { showNotification({ title: "Lỗi nhận thưởng", message: error.message, color: "red" }); options?.onError?.(error); reject(error); }, onSettled: options?.onFinally, }
+          );
+        });
+      } catch (err) { console.error(err); options?.onFinally?.(); return Promise.reject(err); }
+    },
+    [account, signAndExecute, suiClient]
+  );
+
+  /**
    * Lấy số dư hiện tại của Treasury (Kho bạc game)
    */
   const getTreasuryBalance = useCallback(async () => {
@@ -560,6 +621,7 @@ export function useSuiContract() {
     transferSui,
     placeBet,
     claimReward,
+    claimWinnings,
     getTreasuryBalance,
     depositToTreasury,
     withdrawFromTreasury,
