@@ -6,11 +6,14 @@ import {
   Image,
   NavLink,
   Divider,
+  Badge,
+  Box,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { Link, Outlet, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useEffect } from "react";
+import { notifications } from "@mantine/notifications";
 import logoImg from "../assets/logo.png";
 
 // 🔥 Import Web3 (Sui Wallet)
@@ -20,11 +23,17 @@ import { ConnectModal } from "@mysten/dapp-kit";
 /* =========================
    🎨 THEME CONFIG
 ========================= */
-const UI = {
-  gradient: "linear-gradient(135deg,#A259FF,#00E5FF)",
-  glass: "rgba(255,255,255,0.04)",
-  border: "1px solid rgba(255,255,255,0.08)",
-  blur: "blur(18px)",
+const theme = {
+  bg: "#030014",
+  glass: "rgba(20, 20, 30, 0.6)",
+  glassBorder: "rgba(255, 255, 255, 0.08)",
+  primary: "#22d3ee", // Cyan
+  secondary: "#a855f7", // Purple
+  accent: "#f472b6", // Pink
+  text: "#ffffff",
+  glow: "0 0 15px rgba(34, 211, 238, 0.3)",
+  muted: "#94a3b8",
+  success: "#4ade80",
 };
 
 /* =========================
@@ -60,30 +69,32 @@ export default function MainLayout() {
       padding="lg"
       styles={{
         main: {
-          background: `
-            radial-gradient(circle at 20% 30%, rgba(14, 165, 233, 0.08) 0%, transparent 50%),
-            radial-gradient(circle at 80% 70%, rgba(34, 197, 94, 0.06) 0%, transparent 50%),
-            radial-gradient(circle at 50% 10%, rgba(245, 158, 11, 0.05) 0%, transparent 40%),
-            linear-gradient(180deg, #0a0f1a 0%, #0f172a 50%, #1a1f2e 100%)
-          `,
+          background: theme.bg,
+          color: theme.text,
         },
       }}
     >
       {/* ================= HEADER ================= */}
       <AppShell.Header
         style={{
-          backdropFilter: UI.blur,
-          background: "rgba(15, 23, 42, 0.85)",
-          borderBottom: "1px solid rgba(14, 165, 233, 0.2)",
-          boxShadow: "0 4px 20px rgba(14, 165, 233, 0.1)",
+          backdropFilter: "blur(12px)",
+          background: theme.glass,
+          borderBottom: `1px solid ${theme.glassBorder}`,
+          zIndex: 100,
         }}
       >
-        <Group h="100%" px="md" justify="space-between">
+        <Group h="100%" px="md" justify="space-between"> 
           <Group gap="sm">
-            <Burger opened={opened} onClick={toggle} hiddenFrom="sm" size="sm" />
+            <Burger opened={opened} onClick={toggle} hiddenFrom="sm" size="sm" color={theme.primary} />
 
             <Group gap={8}>
               <Image src={logoImg} w={38} h={38} />
+              <Box visibleFrom="sm">
+                <div style={{ fontWeight: 800, fontSize: 20, letterSpacing: "-0.5px" }}>
+                  <span style={{ color: theme.text }}>INVINCIBLE</span>
+                  <span style={{ color: theme.primary }}>.SUI</span>
+                </div>
+              </Box>
             </Group>
           </Group>
 
@@ -99,10 +110,11 @@ export default function MainLayout() {
                   radius="md"
                   size="sm"
                   style={{
-                    background: "linear-gradient(135deg, #22c55e, #16a34a)",
-                    color: "#fff",
+                    background: "rgba(34, 211, 238, 0.1)",
+                    border: `1px solid ${theme.primary}`,
+                    color: theme.primary,
                     fontWeight: 700,
-                    boxShadow: "0 4px 16px rgba(34, 197, 94, 0.4)",
+                    boxShadow: theme.glow,
                   }}
                 >
                   🔑 {shortAddr}
@@ -128,9 +140,10 @@ export default function MainLayout() {
                     radius="md"
                     size="sm"
                     style={{
-                      background: "linear-gradient(135deg, #f59e0b, #d97706)",
-                      boxShadow: "0 4px 16px rgba(245, 158, 11, 0.4)",
-                      color: "#fff",
+                      background: theme.primary,
+                      color: "#000",
+                      boxShadow: theme.glow,
+                      border: "none",
                       fontWeight: 700,
                     }}
                   >
@@ -147,23 +160,27 @@ export default function MainLayout() {
       <AppShell.Navbar
         p="md"
         style={{
-          backdropFilter: UI.blur,
-          background: `
-            linear-gradient(180deg, 
-              rgba(139, 69, 19, 0.2) 0%, 
-              rgba(160, 82, 45, 0.15) 50%,
-              rgba(139, 69, 19, 0.1) 100%
-            )
-          `,
-          borderRight: "2px solid rgba(160, 82, 45, 0.3)",
-          boxShadow: "4px 0 20px rgba(139, 69, 19, 0.15)",
+          backdropFilter: "blur(12px)",
+          background: theme.glass,
+          borderRight: `1px solid ${theme.glassBorder}`,
         }}
       >
         <Divider opacity={0.06} mb="sm" />
 
-        <NavItem label="Trang chủ" to="/" active={pathname === "/"} />
-        <NavItem label="Game" to="/game" active={pathname === "/game"} />
-        <NavItem label="Lịch sử giao dịch" to="/reward" active={pathname === "/reward"} />
+        <NavItem label="🏠 Home" to="/" active={pathname === "/"} />
+        <NavItem label="🎮 Games" to="/game" active={pathname === "/game"} />
+        <NavItem label="🏆 Tournament" to="/tournament" active={pathname === "/tournament"} badge="SOON" disabled />
+        <NavItem label="💰 History" to="/reward" active={pathname === "/reward"} />
+        
+        <Divider my="sm" color="rgba(255,255,255,0.1)" />
+        
+        <div style={{ padding: "0 10px", marginTop: "auto" }}>
+           <div style={{ fontSize: "0.75rem", color: theme.muted, marginBottom: 8 }}>LIVE STATS</div>
+           <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.85rem", marginBottom: 4 }}>
+             <span style={{ color: theme.text }}>SUI Price</span>
+             <span style={{ color: theme.success }}>$1.85 (+2%)</span>
+           </div>
+        </div>
       </AppShell.Navbar>
 
       {/* ================= CONTENT ================= */}
@@ -192,10 +209,22 @@ type NavItemProps = {
   label: string;
   to: string;
   active: boolean;
+  badge?: string;
+  disabled?: boolean;
 };
 
-function NavItem({ label, to, active }: NavItemProps) {
-  const handleClick = () => {
+function NavItem({ label, to, active, badge, disabled }: NavItemProps) {
+  const handleClick = (e: React.MouseEvent) => {
+    if (disabled) {
+      e.preventDefault();
+      notifications.show({
+        title: 'Coming Soon 🚧',
+        message: 'The Tournament Arena is currently under construction. Stay tuned!',
+        color: 'yellow',
+        autoClose: 3000,
+      });
+      return;
+    }
     if (window.innerWidth < 768) {
       window.dispatchEvent(new Event("closeSidebar"));
     }
@@ -208,6 +237,7 @@ function NavItem({ label, to, active }: NavItemProps) {
         to={to}
         label={label}
         active={active}
+        rightSection={badge && <Badge size="xs" variant="filled" color="yellow" style={{color: 'black'}}>{badge}</Badge>}
         onClick={handleClick}
         styles={{
           root: {
@@ -215,25 +245,26 @@ function NavItem({ label, to, active }: NavItemProps) {
             marginBottom: 6,
             padding: "10px 14px",
             fontWeight: 500,
-            color: active ? "#22c55e" : "rgba(255,255,255,0.85)",
+            color: disabled ? "rgba(255,255,255,0.3)" : (active ? "#000" : theme.muted),
+            cursor: disabled ? "not-allowed" : "pointer",
             background: active
-              ? "linear-gradient(90deg, rgba(34, 197, 94, 0.2), rgba(22, 163, 74, 0.15))"
+              ? theme.primary
               : "transparent",
             transition: "0.25s",
             position: "relative",
             overflow: "hidden",
+            boxShadow: active ? theme.glow : "none",
 
             "&::before": active
               ? {
-                  content: '""',
-                  position: "absolute",
-                  left: 0,
-                  top: 0,
-                  height: "100%",
-                  width: "4px",
-                  background: "linear-gradient(180deg, #22c55e, #16a34a)",
+                  content: '""', // Remove side bar, use full fill
+                  display: "none",
                 }
               : {},
+            "&:hover": disabled ? {} : {
+              background: active ? theme.primary : "rgba(255,255,255,0.05)",
+              color: active ? "#000" : theme.text,
+            }
           },
         }}
       />
