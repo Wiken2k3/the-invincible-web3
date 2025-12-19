@@ -3,7 +3,7 @@
 **The Invincible** là một Web3 Mini Farming Game, mô phỏng trải nghiệm **Play-to-Earn** hoàn toàn ở phía client. Trò chơi không yêu cầu giao dịch on-chain cho các hoạt động chính, toàn bộ dữ liệu game được lưu trữ trên **LocalStorage** của trình duyệt. Việc kết nối ví Sui được sử dụng để định danh người chơi và chuẩn bị cho các tính năng on-chain trong tương lai.
 
 Giao diện được thiết kế theo phong cách **Glassmorphism + Parallax Space + Futuristic UI**, với các hiệu ứng mượt mà được thực hiện bởi **Framer Motion** để mang lại trải nghiệm không gian vũ trụ sống động.
-
+<img src="https://drive.google.com/uc?export=view&id=1GqD58dTMUZFpQYgqEG8i1mC43G-Udik8">
 <p align="center">
   <img alt="React" src="https://img.shields.io/badge/React-18.2.0-blue?style=for-the-badge&logo=react">
   <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-5.0.2-blue?style=for-the-badge&logo=typescript">
@@ -22,7 +22,7 @@ Giao diện được thiết kế theo phong cách **Glassmorphism + Parallax Sp
 
 - [Giới thiệu](#-giới-thiệu)
 - [Tính năng nổi bật](#-tính-năng-nổi-bật)
-- [Hình ảnh trong game](#-hình-ảnh-trong-game)
+- [Hình ảnh DEMO](#-hình-ảnh-DEMO)
 - [Công nghệ sử dụng](#-công-nghệ-sử-dụng)
 - [Bắt đầu](#️-bắt-đầu)
 - [Logic Trò chơi](#-logic-trò-chơi)
@@ -45,10 +45,6 @@ Trong **The Invincible**, bạn sẽ:
 
 ## ✨ Tính năng nổi bật
 
-### 🌱 **Hệ thống Farming**
-- **4 loại hạt giống:** `Common`, `Rare`, `Epic`, `Legendary` với thời gian sinh trưởng và phần thưởng khác nhau.
-- **Cơ chế trồng và thu hoạch:** Mô phỏng vòng đời của một game farming thực thụ.
-
 ### 🎲 **7+ Mini-Games**
 Một bộ sưu tập các mini-game đa dạng để giải trí và kiếm thêm Coins:
 - **Dice:** Cược kết quả của một viên xúc xắc.
@@ -59,10 +55,6 @@ Một bộ sưu tập các mini-game đa dạng để giải trí và kiếm th�
 - **Wheel:** Quay vòng quay may mắn để nhận thưởng.
 - **Horse Race:** Đặt cược vào cuộc đua ngựa kịch tính.
 
-### 🎁 **Mystery Box**
-- Tính năng đặc biệt cho phép người chơi dùng Coins để đổi lấy cơ hội nhận Airdrop Points (AP) ngẫu nhiên.
-- Yêu cầu số dư tối thiểu để tham gia, tạo thêm mục tiêu cho người chơi.
-
 ### 🎨 **Giao diện & Trải nghiệm người dùng (UI/UX)**
 - **Glassmorphism & Futuristic UI:** Tạo chiều sâu và cảm giác hiện đại.
 - **Hiệu ứng Parallax:** Các hành tinh và vật thể di chuyển tạo không gian 3D sống động.
@@ -71,11 +63,10 @@ Một bộ sưu tập các mini-game đa dạng để giải trí và kiếm th�
 
 ---
 
-## 🖼️ Hình ảnh trong game
-
-| Trang chủ | Hệ thống Farming | Mystery Box |
+## 🖼️ Hình ảnh DEMO
+| Trang chủ | Games | History |
 | :---: | :---: | :---: |
-| <img src="https://drive.google.com/uc?export=view&id=1lmU5xhnPkRSKbUAAaIdEh37r17Sw2zRC" width="250"> | <img src="https://drive.google.com/uc?export=view&id=1X5oAwXROUVwoFdev5dMtS3NbKfvrI-iC" width="250"> | <img src="https://drive.google.com/uc?export=view&id=1vvD7jzvbGiEoXrb2cpxBLJgnWfzDxVrk" width="250"> |
+| <img src="https://drive.google.com/uc?export=view&id=1GqD58dTMUZFpQYgqEG8i1mC43G-Udik8" width="600"> | <img src="https://drive.google.com/uc?export=view&id=1tF5ryrx7WLZ2P-TaLHJHfTVczofLgLMQ" width="600"> | <img src="https://drive.google.com/uc?export=view&id=1v2ESyPLTMYk1bz3tkglG9F1AH6eSvUO1" width="600"> |
 
 ---
 
@@ -130,42 +121,7 @@ npm run build
 Các file tĩnh sẽ được tạo trong thư mục `dist/`.
 ---
 
-## 📁 Cấu trúc thư mục
- ```bash
-src/
-│
-├── config/         # Cấu hình liên quan đến Web3 (Sui) và địa chỉ ví.
-├── hooks/          # Các custom hooks cho logic (ví dụ: useWallet, useSuiContract).
-├── pages/          # Các trang chính của ứng dụng (Home, GameHub, Mini-games).
-├── utils/          # Các hàm tiện ích sử dụng chung.
-├── layout/         # Bố cục chung của ứng dụng (MainLayout).
-├── App.tsx         # Component gốc, nơi quản lý routing.
-├── main.tsx        # Điểm vào của ứng dụng React.
-└── theme.ts        # Cấu hình theme cho Mantine UI.
-```
-# 🔧 Logic Game
-
-
-
-```
-# 📦 Build & Deploy
-```bash
-Build
-npm run build
-```
-# 📬 Liên hệ
-
-📧 Email: wiken2k3@gmail.com
-## Profile: (https://wikenportfolio.vercel.app)
-
-🐦 Facebook: https://www.facebook.com/Wiken2k3
-# Web đã được deloy tại Vercel :
-[Tại đây](https://the-invincible-web3.vercel.app/)
-Ứng dụng chạy tại:
-👉 http://localhost:5173
-
 # 📁 Cấu trúc thư mục
-## 📁 Cấu trúc thư mục
  ```bash
 src/
 │
@@ -206,17 +162,12 @@ src/
 ├── main.tsx        # Điểm vào của ứng dụng React.
 └── theme.ts        # Cấu hình theme cho Mantine UI.
 ```
-# 🔧 Logic Game
-
-
-
 # 📦 Build & Deploy
 ```bash
 Build
 npm run build
 ```
 # 📬 Liên hệ
-
 📧 Email: wiken2k3@gmail.com
 ## Profile: (https://wikenportfolio.vercel.app)
 
