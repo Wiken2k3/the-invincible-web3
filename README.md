@@ -1,129 +1,171 @@
 # 🪐 The Invincible – Web3 Mini Farming Game
 
-**The Invincible** là một Web3 Mini Farming Game mô phỏng mô hình **Play → Earn → Claim**. Trò chơi kết hợp cơ chế trồng cây, thu hoạch, mở Mystery Box để nhận Airdrop Points.
-Giao diện được thiết kế theo phong cách **Glassmorphism + Parallax Space + Futuristic UI**, với các hiệu ứng mượt mà được thực hiện bởi **Framer Motion**.
+**The Invincible** là một Web3 Mini Farming Game, mô phỏng trải nghiệm **Play-to-Earn** hoàn toàn ở phía client. Trò chơi không yêu cầu giao dịch on-chain cho các hoạt động chính, toàn bộ dữ liệu game được lưu trữ trên **LocalStorage** của trình duyệt. Việc kết nối ví Sui được sử dụng để định danh người chơi và chuẩn bị cho các tính năng on-chain trong tương lai.
+
+Giao diện được thiết kế theo phong cách **Glassmorphism + Parallax Space + Futuristic UI**, với các hiệu ứng mượt mà được thực hiện bởi **Framer Motion** để mang lại trải nghiệm không gian vũ trụ sống động.
 
 <p align="center">
-  <img src="https://img.shields.io/badge/React-18-blue" />
-  <img src="https://img.shields.io/badge/Vite-Bundler-yellow" />
-  <img src="https://img.shields.io/badge/Status-Active-brightgreen" />
-  <img src="https://img.shields.io/badge/License-MIT-purple" />
-  <img src="https://img.shields.io/badge/UI-Mantine%20UI-blueviolet" />
-  <img src="https://img.shields.io/badge/Animation-Framer%20Motion-ff69b4" />
+  <img alt="React" src="https://img.shields.io/badge/React-18.2.0-blue?style=for-the-badge&logo=react">
+  <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-5.0.2-blue?style=for-the-badge&logo=typescript">
+  <img alt="Vite" src="https://img.shields.io/badge/Vite-4.4.5-yellowgreen?style=for-the-badge&logo=vite">
+  <img alt="Status" src="https://img.shields.io/badge/Status-Hoàn%20thành-brightgreen?style=for-the-badge">
+  <img alt="License" src="https://img.shields.io/badge/License-MIT-purple?style=for-the-badge">
+</p>
+
+<p align="center">
+  <strong><a href="https://the-invincible-web3.vercel.app/">🚀 Chơi ngay 🚀</a></strong>
 </p>
 
 ---
 
-## 📸 Preview giao diện
-
-### 🏠 Home Page
-<p align="center">
-  <img width="800" src="https://drive.google.com/uc?export=view&id=1lmU5xhnPkRSKbUAAaIdEh37r17Sw2zRC" />
-</p>
-
----
-
-### 🎮 Game – Farming System
-<p align="center">
-  <img width="800" src="https://drive.google.com/uc?export=view&id=1X5oAwXROUVwoFdev5dMtS3NbKfvrI-iC" />
-</p>
-
----
-
-### 🎁 Reward – Mystery Box
-<p align="center">
-  <img width="800" src="https://drive.google.com/uc?export=view&id=1vvD7jzvbGiEoXrb2cpxBLJgnWfzDxVrk" />
-</p>
-
----
-
-## 📑 Mục lục
+##  Mục lục
 
 - [Giới thiệu](#-giới-thiệu)
-- [Tính năng chính](#-tính-năng-chính)
-- [Giao diện nổi bật](#-uiux-nổi-bật)
+- [Tính năng nổi bật](#-tính-năng-nổi-bật)
+- [Hình ảnh trong game](#-hình-ảnh-trong-game)
 - [Công nghệ sử dụng](#-công-nghệ-sử-dụng)
-- [Cài đặt](#️-cài-đặt)
-- [Chạy dự án](#️-chạy-dự-án)
+- [Bắt đầu](#️-bắt-đầu)
+- [Logic Trò chơi](#-logic-trò-chơi)
 - [Cấu trúc thư mục](#-cấu-trúc-thư-mục)
-- [Logic Game](#-logic-game)
-- [Build & Deploy](#-build--deploy)
-- [Triển khai](#-triển-khai)
+- [Đóng góp](#-đóng-góp)
 - [Giấy phép](#-giấy-phép)
 - [Liên hệ](#-liên-hệ)
----
 
-# 🚀 Giới thiệu
+## 🚀 Giới thiệu
 
-**The Invincible** là trò chơi Farming dạng Web3 (Off-chain simulation) nơi người chơi:
+**The Invincible** là một Web3 Mini Farming Game, mô phỏng trải nghiệm **Play-to-Earn** hoàn toàn ở phía client. Trò chơi không yêu cầu giao dịch on-chain cho các hoạt động chính, toàn bộ dữ liệu game được lưu trữ trên **LocalStorage** của trình duyệt. Việc kết nối ví Sui được sử dụng để định danh người chơi và chuẩn bị cho các tính năng on-chain trong tương lai.
 
-- Trồng hạt → cây lớn theo thời gian  
-- Thu hoạch để nhận **Coins** và **Airdrop Points (AP)**
-- Dùng Coins để mua hạt giống mới trong cửa hàng
-- Mở **1 trong 10 Mystery Box** để nhận phần thưởng AP ngẫu nhiên
-- Theo dõi tiến trình farming với giao diện vũ trụ độc đáo
-
-Trò chơi hoạt động hoàn toàn ở phía client bằng React và lưu trữ toàn bộ dữ liệu game trên **LocalStorage** của trình duyệt.
+Trong **The Invincible**, bạn sẽ:
+- **Trồng trọt:** Mua hạt giống, gieo trồng và chờ đợi cây lớn lên.
+- **Thu hoạch:** Nhận phần thưởng là **Coins** (tiền tệ trong game) và **Airdrop Points (AP)**.
+- **Giải trí:** Tham gia vào hơn 7 mini-game hấp dẫn để kiếm thêm Coins.
+- **Săn thưởng:** Mở **Mystery Box** để có cơ hội nhận được những phần thưởng AP giá trị.
 
 ---
 
-# ⭐ Tính năng chính
+## ✨ Tính năng nổi bật
 
-###  Mini-Games
-Dự án bao gồm một loạt các mini-game hấp dẫn, mang đến nhiều cách thức để người chơi giải trí và kiếm thưởng:
-- **Dice**: Trò chơi xúc xắc cổ điển.
-- **Tài Xỉu**: Cược kết quả của ba viên xúc xắc.
-- **Mines**: Trò chơi dò mìn đầy kịch tính.
-- **Slot**: Vòng quay may mắn với các biểu tượng.
-- **Tower**: Thử thách leo tháp qua từng tầng.
-- **Wheel**: Vòng quay phần thưởng.
-- **Horse Race**: Đặt cược vào cuộc đua ngựa gay cấn.
+### 🌱 **Hệ thống Farming**
+- **4 loại hạt giống:** `Common`, `Rare`, `Epic`, `Legendary` với thời gian sinh trưởng và phần thưởng khác nhau.
+- **Cơ chế trồng và thu hoạch:** Mô phỏng vòng đời của một game farming thực thụ.
 
-### 🎁 Mystery Box  
-- Yêu cầu số dư **≥ 500 Coins** để bắt đầu.
-- Mỗi lượt mở tốn **50 Coins**.
-- Hệ thống sẽ tạo ra 10 hộp quà với giá trị AP ngẫu nhiên từ **10 đến 100**.
-- Người chơi chỉ được chọn mở **một hộp duy nhất**.
-- Các hộp còn lại sẽ bị khóa sau khi người chơi đã chọn.
+### 🎲 **7+ Mini-Games**
+Một bộ sưu tập các mini-game đa dạng để giải trí và kiếm thêm Coins:
+- **Dice:** Cược kết quả của một viên xúc xắc.
+- **Tài Xỉu:** Cược tổng điểm của ba viên xúc xắc.
+- **Mines:** Dò mìn để tìm kim cương và tránh bom.
+- **Slot:** Quay máy slot để tìm các tổ hợp chiến thắng.
+- **Tower:** Leo tháp qua các tầng đầy rủi ro.
+- **Wheel:** Quay vòng quay may mắn để nhận thưởng.
+- **Horse Race:** Đặt cược vào cuộc đua ngựa kịch tính.
+
+### 🎁 **Mystery Box**
+- Tính năng đặc biệt cho phép người chơi dùng Coins để đổi lấy cơ hội nhận Airdrop Points (AP) ngẫu nhiên.
+- Yêu cầu số dư tối thiểu để tham gia, tạo thêm mục tiêu cho người chơi.
+
+### 🎨 **Giao diện & Trải nghiệm người dùng (UI/UX)**
+- **Glassmorphism & Futuristic UI:** Tạo chiều sâu và cảm giác hiện đại.
+- **Hiệu ứng Parallax:** Các hành tinh và vật thể di chuyển tạo không gian 3D sống động.
+- **Nền chuyển động (Particle Background):** Mô phỏng một vũ trụ bao la, lấp lánh.
+- **Animation mượt mà:** Sử dụng **Framer Motion** để tạo các hiệu ứng chuyển động, popup, và tương tác trơn tru.
+
+---
+
+## 🖼️ Hình ảnh trong game
+
+| Trang chủ | Hệ thống Farming | Mystery Box |
+| :---: | :---: | :---: |
+| <img src="https://drive.google.com/uc?export=view&id=1lmU5xhnPkRSKbUAAaIdEh37r17Sw2zRC" width="250"> | <img src="https://drive.google.com/uc?export=view&id=1X5oAwXROUVwoFdev5dMtS3NbKfvrI-iC" width="250"> | <img src="https://drive.google.com/uc?export=view&id=1vvD7jzvbGiEoXrb2cpxBLJgnWfzDxVrk" width="250"> |
 
 ---
 
-# 🎨 UI/UX nổi bật
-- **Glassmorphism**: Giao diện trong suốt tạo chiều sâu.
-- **Gradient Cosmic**: Màu sắc gradient theo chủ đề vũ trụ.
-- **Parallax Planet**: Hiệu ứng các hành tinh di chuyển tạo không gian 3D.
-- **Particle Space Background**: Nền với các hạt lấp lánh chuyển động.
-- **Popup Animated**: Các thông báo và popup được làm mượt mà với **Framer Motion**.
+## 🛠️ Công nghệ sử dụng
+
+| Hạng mục | Công nghệ |
+| :--- | :--- |
+| **Framework & Bundler** | React 18 + Vite |
+| **Ngôn ngữ** | TypeScript |
+| **UI/UX** | Mantine UI, Framer Motion |
+| **Routing** | React Router DOM |
+| **Web3** | Sui Wallet Adapter |
+| **Lưu trữ** | LocalStorage |
 
 ---
-# 🧩 Công nghệ sử dụng
 
-- **Framework**: React 18 + Vite
-- **Ngôn ngữ**: TypeScript
-- **UI Library**: Mantine UI
-- **Animation**: Framer Motion
-- **Routing**: React Router DOM
-- **Web3**: Sui Wallet Adapter
-- **Storage**: LocalStorage
-- **Thiết kế**: Responsive trên nhiều thiết bị
+## ⚡ Bắt đầu
 
----
-# 🛠️ Cài đặt
+### Yêu cầu
+- Node.js (phiên bản 18.x trở lên)
+- `npm`, `yarn` hoặc `pnpm`
+
+### Cài đặt & Chạy
+
+1.  **Clone repository về máy:**
+    ```bash
+    git clone https://github.com/Wiken2k3/the-invincible-web3.git
+    ```
+
+2.  **Di chuyển vào thư mục dự án:**
+    ```bash
+    cd the-invincible-web3
+    ```
+
+3.  **Cài đặt các dependencies:**
+    ```bash
+    npm install
+    ```
+
+4.  **Chạy dự án ở chế độ development:**
+    ```bash
+    npm run dev
+    ```
+    Mở trình duyệt và truy cập `http://localhost:5173`.
+
+### Build dự án
+
+Để tạo phiên bản production của ứng dụng, chạy lệnh:
 ```bash
-git clone https://github.com/Wiken2k3/the-invincible-web3.git
-cd the-invincible-web3
-npm install # hoặc yarn install, pnpm install
+npm run build
 ```
+Các file tĩnh sẽ được tạo trong thư mục `dist/`.
 ---
-# ▶️ Chạy dự án
 
-```bash
-npm run dev
+## 📁 Cấu trúc thư mục
+ ```bash
+src/
+│
+├── config/         # Cấu hình liên quan đến Web3 (Sui) và địa chỉ ví.
+├── hooks/          # Các custom hooks cho logic (ví dụ: useWallet, useSuiContract).
+├── pages/          # Các trang chính của ứng dụng (Home, GameHub, Mini-games).
+├── utils/          # Các hàm tiện ích sử dụng chung.
+├── layout/         # Bố cục chung của ứng dụng (MainLayout).
+├── App.tsx         # Component gốc, nơi quản lý routing.
+├── main.tsx        # Điểm vào của ứng dụng React.
+└── theme.ts        # Cấu hình theme cho Mantine UI.
 ```
+# 🔧 Logic Game
+
+
+
+```
+# 📦 Build & Deploy
+```bash
+Build
+npm run build
+```
+# 📬 Liên hệ
+
+📧 Email: wiken2k3@gmail.com
+## Profile: (https://wikenportfolio.vercel.app)
+
+🐦 Facebook: https://www.facebook.com/Wiken2k3
+# Web đã được deloy tại Vercel :
+[Tại đây](https://the-invincible-web3.vercel.app/)
 Ứng dụng chạy tại:
 👉 http://localhost:5173
 
 # 📁 Cấu trúc thư mục
+## 📁 Cấu trúc thư mục
  ```bash
 src/
 │
@@ -155,42 +197,19 @@ src/
 ├── App.tsx
 ├── main.tsx
 └── theme.ts
+├── config/         # Cấu hình liên quan đến Web3 (Sui) và địa chỉ ví.
+├── hooks/          # Các custom hooks cho logic (ví dụ: useWallet, useSuiContract).
+├── pages/          # Các trang chính của ứng dụng (Home, GameHub, Mini-games).
+├── utils/          # Các hàm tiện ích sử dụng chung.
+├── layout/         # Bố cục chung của ứng dụng (MainLayout).
+├── App.tsx         # Component gốc, nơi quản lý routing.
+├── main.tsx        # Điểm vào của ứng dụng React.
+└── theme.ts        # Cấu hình theme cho Mantine UI.
 ```
 # 🔧 Logic Game
 
-## 🌱 Seeds
-```bash
-{
-  common:    { price: 10,  growSec: 15,  airdrop: 1 },
-  rare:      { price: 35,  growSec: 30,  airdrop: 3 },
-  epic:      { price: 120, growSec: 60,  airdrop: 8 },
-  legendary: { price: 400, growSec: 180, airdrop: 25 },
-}
-```
-🌾 Harvest Calculation
 
-Công thức Coins:
-```bash
-Coins = seed price × random(0.6 → 1.4)
-```
-Công thức Airdrop Points (AP):
-```bash
-AP = base AP + bonus theo Effect Quality
-```
-Quality có tỉ lệ: Normal, Bronze, Silver, Gold, Diamond.
 
-# 🎁 Mystery Box Rules
-```bash
-- Require: ≥ 500 Coins
-- Cost: 50 Coins
-- Generate: 10 boxes per panel
-- Player can open: 1 box only
-- Box Reward: 10 → 100 AP
-```
-# 💾 LocalStorage Key
-```bash
-farm_game_v6_web3_ui_clean
-```
 # 📦 Build & Deploy
 ```bash
 Build
