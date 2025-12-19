@@ -1,10 +1,10 @@
 # 🪐 The Invincible – Web3 Mini Farming Game
 
-Web3 Mini Farming Game mô phỏng mô hình **Play → Earn → Claim**, kết hợp cơ chế trồng cây – thu hoạch – mở Mystery Box – nhận Airdrop Points.  
-Giao diện sử dụng **Glassmorphism + Parallax Space + Futuristic UI**, hiệu ứng mượt với **Framer Motion**.
+**The Invincible** là một Web3 Mini Farming Game mô phỏng mô hình **Play → Earn → Claim**. Trò chơi kết hợp cơ chế trồng cây, thu hoạch, mở Mystery Box để nhận Airdrop Points.
+Giao diện được thiết kế theo phong cách **Glassmorphism + Parallax Space + Futuristic UI**, với các hiệu ứng mượt mà được thực hiện bởi **Framer Motion**.
 
 <p align="center">
-  <img src="https://img.shields.io/badge/React-18.3-blue" />
+  <img src="https://img.shields.io/badge/React-18-blue" />
   <img src="https://img.shields.io/badge/Vite-Bundler-yellow" />
   <img src="https://img.shields.io/badge/Status-Active-brightgreen" />
   <img src="https://img.shields.io/badge/License-MIT-purple" />
@@ -41,15 +41,16 @@ Giao diện sử dụng **Glassmorphism + Parallax Space + Futuristic UI**, hi�
 
 - [Giới thiệu](#-giới-thiệu)
 - [Tính năng chính](#-tính-năng-chính)
+- [Giao diện nổi bật](#-uiux-nổi-bật)
 - [Công nghệ sử dụng](#-công-nghệ-sử-dụng)
 - [Cài đặt](#️-cài-đặt)
 - [Chạy dự án](#️-chạy-dự-án)
 - [Cấu trúc thư mục](#-cấu-trúc-thư-mục)
 - [Logic Game](#-logic-game)
 - [Build & Deploy](#-build--deploy)
+- [Triển khai](#-triển-khai)
 - [Giấy phép](#-giấy-phép)
 - [Liên hệ](#-liên-hệ)
-
 ---
 
 # 🚀 Giới thiệu
@@ -57,73 +58,61 @@ Giao diện sử dụng **Glassmorphism + Parallax Space + Futuristic UI**, hi�
 **The Invincible** là trò chơi Farming dạng Web3 (Off-chain simulation) nơi người chơi:
 
 - Trồng hạt → cây lớn theo thời gian  
-- Thu hoạch để nhận **Coins + Airdrop Points**  
-- Mua hạt giống trong shop  
-- Mở **1 trong 10 Mystery Box** để nhận AP ngẫu nhiên  
-- Theo dõi tiến trình farming tương lai với UI phong cách vũ trụ
+- Thu hoạch để nhận **Coins** và **Airdrop Points (AP)**
+- Dùng Coins để mua hạt giống mới trong cửa hàng
+- Mở **1 trong 10 Mystery Box** để nhận phần thưởng AP ngẫu nhiên
+- Theo dõi tiến trình farming với giao diện vũ trụ độc đáo
 
-Game chạy hoàn toàn client-side bằng React, dữ liệu được lưu qua **LocalStorage**.
+Trò chơi hoạt động hoàn toàn ở phía client bằng React và lưu trữ toàn bộ dữ liệu game trên **LocalStorage** của trình duyệt.
 
 ---
 
 # ⭐ Tính năng chính
 
-### 🌱 Farming  
-- 9 ô đất  
-- 4 loại hạt: Common – Rare – Epic – Legendary  
-- Mỗi hạt có grow time & AP riêng  
-- Tiến trình hiển thị bằng progress bar thời gian thực  
-- Harvest từng cây hoặc **Harvest All**
-
-### ✨ Effect Quality System  
-Khi thu hoạch có tỉ lệ xuất hiện:
-
-| Quality | Weight | Bonus AP |
-|--------|--------|----------|
-| Normal | 40% | +0 |
-| Bronze | 30% | +5 |
-| Silver | 20% | +10 |
-| Gold | 8% | +30 |
-| Diamond | 2% | +50 |
+###  Mini-Games
+Dự án bao gồm một loạt các mini-game hấp dẫn, mang đến nhiều cách thức để người chơi giải trí và kiếm thưởng:
+- **Dice**: Trò chơi xúc xắc cổ điển.
+- **Tài Xỉu**: Cược kết quả của ba viên xúc xắc.
+- **Mines**: Trò chơi dò mìn đầy kịch tính.
+- **Slot**: Vòng quay may mắn với các biểu tượng.
+- **Tower**: Thử thách leo tháp qua từng tầng.
+- **Wheel**: Vòng quay phần thưởng.
+- **Horse Race**: Đặt cược vào cuộc đua ngựa gay cấn.
 
 ### 🎁 Mystery Box  
-- Yêu cầu **≥ 500 Coins** để mở lootboard  
-- Mỗi lượt tốn **50 Coins**  
-- Sinh 10 box với giá trị **10–100 AP**  
-- Người chơi chỉ mở **1 box duy nhất**  
-- Những box còn lại bị khóa
+- Yêu cầu số dư **≥ 500 Coins** để bắt đầu.
+- Mỗi lượt mở tốn **50 Coins**.
+- Hệ thống sẽ tạo ra 10 hộp quà với giá trị AP ngẫu nhiên từ **10 đến 100**.
+- Người chơi chỉ được chọn mở **một hộp duy nhất**.
+- Các hộp còn lại sẽ bị khóa sau khi người chơi đã chọn.
 
-### 🎨 UI/UX nổi bật  
-- Glassmorphism  
-- Gradient Cosmic  
-- Parallax Planet  
-- Particle Space Background  
-- Popup animated bằng Framer Motion  
+---
+
+# 🎨 UI/UX nổi bật
+- **Glassmorphism**: Giao diện trong suốt tạo chiều sâu.
+- **Gradient Cosmic**: Màu sắc gradient theo chủ đề vũ trụ.
+- **Parallax Planet**: Hiệu ứng các hành tinh di chuyển tạo không gian 3D.
+- **Particle Space Background**: Nền với các hạt lấp lánh chuyển động.
+- **Popup Animated**: Các thông báo và popup được làm mượt mà với **Framer Motion**.
 
 ---
 # 🧩 Công nghệ sử dụng
-React 18 + Vite
 
-TypeScript
-
-Mantine UI
-
-Framer Motion
-
-React Router DOM
-
-Sui Wallet Adapter
-
-LocalStorage
-
-Responsive UI
+- **Framework**: React 18 + Vite
+- **Ngôn ngữ**: TypeScript
+- **UI Library**: Mantine UI
+- **Animation**: Framer Motion
+- **Routing**: React Router DOM
+- **Web3**: Sui Wallet Adapter
+- **Storage**: LocalStorage
+- **Thiết kế**: Responsive trên nhiều thiết bị
 
 ---
 # 🛠️ Cài đặt
 ```bash
 git clone https://github.com/Wiken2k3/the-invincible-web3.git
 cd the-invincible-web3
-npm install
+npm install # hoặc yarn install, pnpm install
 ```
 ---
 # ▶️ Chạy dự án
