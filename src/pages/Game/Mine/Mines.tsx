@@ -18,7 +18,7 @@ import { showNotification } from "@mantine/notifications";
 
 import { useWallet } from "../../../hooks/useWallet";
 import { useSuiContract } from "../../../hooks/useSuiContract";
-import { IconRefresh, IconDiamond, IconBomb } from "@tabler/icons-react";
+import { IconDiamond, IconBomb, IconQuestionMark } from "@tabler/icons-react";
 
 /* ================= CONFIG ================= */
 
@@ -31,9 +31,9 @@ const DIFFICULTY_CONFIG: Record<
   Difficulty,
   { mines: number; empty: number; gems: number; min: number; max: number }
 > = {
-  easy: { mines: 12, empty: 42, gems: 10, min: 1.1, max: 2.0 },
-  medium: { mines: 30, empty: 24, gems: 10, min: 1.5, max: 4.0 },
-  hard: { mines: 42, empty: 12, gems: 10, min: 2.5, max: 8.0 },
+  easy: { mines: 8, empty: 46, gems: 10, min: 1.1, max: 1.35 },
+  medium: { mines: 16, empty: 38, gems: 10, min: 1.25, max: 2.0 },
+  hard: { mines: 24, empty: 30, gems: 10, min: 1.4, max: 3.0 },
 };
 
 type Cell =
@@ -62,7 +62,7 @@ function generateBoard(difficulty: Difficulty): Cell[] {
 
 export default function Mines() {
   const { address } = useWallet();
-  const { placeBet, claimReward, getTreasuryBalance, requestFaucet, getBalance } = useSuiContract();
+  const { placeBet, claimReward, getTreasuryBalance, getBalance } = useSuiContract();
 
   const [bet, setBet] = useState(1);
   const [difficulty, setDifficulty] = useState<Difficulty>("easy");
@@ -108,6 +108,15 @@ export default function Mines() {
       showNotification({
         title: "Chưa kết nối ví",
         message: "Vui lòng connect wallet",
+        color: "red",
+      });
+      return;
+    }
+
+    if (userBal !== null && userBal < bet) {
+      showNotification({
+        title: "Số dư không đủ",
+        message: `Bạn cần ít nhất ${bet} SUI để chơi.`,
         color: "red",
       });
       return;
@@ -183,19 +192,6 @@ export default function Mines() {
     });
   };
 
-  /* 💧 Handle Faucet & Refresh Balance */
-  const handleFaucet = async () => {
-    await requestFaucet();
-    // Đợi 3s để blockchain xử lý rồi cập nhật lại số dư hiển thị
-    setTimeout(() => {
-      if (address) {
-        getBalance().then(res => {
-          if (res) setUserBal(Number(res.totalBalance) / 1e9);
-        });
-      }
-    }, 3000);
-  };
-
   const resetGame = () => {
     setGameState("setup");
     setDiamondsFound(0);
@@ -216,7 +212,7 @@ export default function Mines() {
         </Badge>
       </Group>
       
-      {/* Treasury Info & Faucet */}
+      {/* Treasury Info */}
       <Group justify="space-between" mb="md">
         <Text size="xs" c="dimmed">
           🏦 Treasury: {treasuryBal !== null 
@@ -225,10 +221,6 @@ export default function Mines() {
               ? "Error" 
               : "Loading..."}
         </Text>
-        
-        <Button variant="subtle" size="xs" onClick={handleFaucet} leftSection={<IconRefresh size={14} />}>
-          Faucet SUI
-        </Button>
       </Group>
 
       {gameState === "setup" && (
@@ -289,8 +281,6 @@ export default function Mines() {
                       disabled={gameState !== "playing" && !isOpened}
                       styles={{
                         root: {
-                          backgroundColor: isOpened && !isMine ? "black" : undefined,
-                          borderColor: isOpened && !isMine ? "black" : undefined,
                           transition: "all 0.2s",
                         }
                       }}
@@ -300,7 +290,7 @@ export default function Mines() {
                       ) : isRevealed ? (
                         <IconBomb size={16} />
                       ) : (
-                        ""
+                        <IconQuestionMark size={20} />
                       )}
                     </Button>
                   );
