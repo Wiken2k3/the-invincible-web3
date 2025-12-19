@@ -300,7 +300,7 @@ const RewardsSection = () => (
           <span style={{ color: theme.accent }}>Earn</span> While You Play
         </h2>
         <p style={{ color: theme.muted, marginBottom: 24, lineHeight: 1.6 }}>
-          Staking $INV tokens will unlock revenue sharing from the casino house edge.
+          Staking $SIU tokens will unlock revenue sharing from the casino house edge.
           Exclusive NFTs will grant VIP access, rakeback, and daily airdrops.
         </p>
         <div style={{ display: "flex", gap: 16 }}>
@@ -324,21 +324,58 @@ const RewardsSection = () => (
 
 const Footer = () => (
   <footer style={styles.footer}>
-    <div className="container footer-content" style={styles.footerContent}>
-      <div>
-        <h4 style={{ fontSize: "1.2rem", fontWeight: 800, color: theme.text }}>THE INVINCIBLE</h4>
-        <p style={{ color: theme.muted, fontSize: "0.9rem", marginTop: 8 }}>
-          The premier decentralized casino on SUI.
-        </p>
+    <div className="container">
+      <div style={styles.footerGrid}>
+        {/* Column 1: Brand & Socials */}
+        <div style={styles.footerColumn}>
+          <h4 style={styles.footerTitle}>THE INVINCIBLE</h4>
+          <p style={{ color: theme.muted, fontSize: "0.9rem", marginTop: 8, lineHeight: 1.6, maxWidth: 250 }}>
+            The premier decentralized casino on SUI. Provably fair, instant payouts.
+          </p>
+          <div style={{ display: 'flex', gap: 16, marginTop: 24 }}>
+            <SocialIcon href="#" icon="🐦" />
+            <SocialIcon href="#" icon="💬" />
+            <SocialIcon href="#" icon="✈️" />
+          </div>
+        </div>
+
+        {/* Column 2: Links */}
+        <div style={styles.footerColumn}>
+          <h5 style={styles.footerHeading}>Explore</h5>
+          <ul style={styles.footerLinkList}>
+            <li><Link to="/game" style={styles.footerLink}>Games</Link></li>
+            <li><Link to="#" style={styles.footerLink}>Promotions</Link></li>
+            <li><Link to="#" style={styles.footerLink}>Staking (Soon)</Link></li>
+            <li><Link to="#" style={styles.footerLink}>Leaderboard</Link></li>
+          </ul>
+        </div>
+
+        {/* Column 3: Community */}
+        <div style={styles.footerColumn}>
+          <h5 style={styles.footerHeading}>Community</h5>
+          <ul style={styles.footerLinkList}>
+            <li><a href="#" style={styles.footerLink}>Discord</a></li>
+            <li><a href="#" style={styles.footerLink}>Twitter / X</a></li>
+            <li><a href="#" style={styles.footerLink}>Telegram</a></li>
+            <li><a href="#" style={styles.footerLink}>Docs</a></li>
+          </ul>
+        </div>
+        
+        {/* Column 4: Legal */}
+        <div style={styles.footerColumn}>
+          <h5 style={styles.footerHeading}>Legal</h5>
+          <ul style={styles.footerLinkList}>
+            <li><a href="#" style={styles.footerLink}>Terms of Service</a></li>
+            <li><a href="#" style={styles.footerLink}>Privacy Policy</a></li>
+            <li><a href="#" style={styles.footerLink}>Responsible Gaming</a></li>
+          </ul>
+        </div>
       </div>
-      <div style={{ display: "flex", gap: 24 }}>
-        {["Twitter", "Discord", "Telegram", "Docs"].map((link) => (
-          <a key={link} href="#" style={{ color: theme.muted, textDecoration: "none" }}>{link}</a>
-        ))}
+
+      <div style={styles.copyright}>
+        <p style={{ margin: '0 0 8px 0' }}>🔞 Please play responsibly. You must be 18+ to play.</p>
+        <p style={{ margin: 0 }}>© 2025 The Invincible. All rights reserved.</p>
       </div>
-    </div>
-    <div style={styles.copyright}>
-      © 2025 The Invincible. All rights reserved.
     </div>
   </footer>
 );
@@ -413,6 +450,20 @@ const SecondaryButton = ({ children }: any) => (
     {children}
   </button>
 );
+
+const SocialIcon = ({ href, icon }: { href: string, icon: string }) => {
+  const [hover, setHover] = React.useState(false);
+  const style = {
+    ...styles.socialLink,
+    background: hover ? theme.primary : 'rgba(255,255,255,0.05)',
+    color: hover ? '#000' : theme.text,
+  };
+  return (
+    <a href={href} style={style} onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}>
+      {icon}
+    </a>
+  );
+};
 
 /* ===================== STYLES ===================== */
 
@@ -657,22 +708,64 @@ const styles = {
   },
   footer: {
     borderTop: `1px solid ${theme.border}`,
-    padding: "80px 24px 40px",
-    background: "#02010a",
+    padding: "80px 0 40px",
+    background: "rgba(3, 0, 20, 0.5)",
+    position: "relative" as const,
+    zIndex: 1,
   },
-  footerContent: {
-    display: "flex",
-    justifyContent: "space-between",
-    flexWrap: "wrap" as const,
+  footerGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
     gap: 40,
     marginBottom: 60,
+  },
+  footerColumn: {},
+  footerTitle: {
+    fontSize: "1.5rem",
+    fontWeight: 800,
+    color: theme.text,
+    margin: 0,
+  },
+  footerHeading: {
+    fontSize: "1rem",
+    fontWeight: 700,
+    color: theme.primary,
+    marginBottom: 24,
+    textTransform: "uppercase" as const,
+    letterSpacing: 1,
+  },
+  footerLinkList: {
+    listStyle: "none",
+    padding: 0,
+    margin: 0,
+    display: "flex",
+    flexDirection: "column" as const,
+    gap: 12,
+  },
+  footerLink: {
+    color: theme.muted,
+    textDecoration: "none",
+    fontSize: "0.9rem",
+  },
+  socialLink: {
+    width: 40,
+    height: 40,
+    borderRadius: "50%",
+    border: `1px solid ${theme.border}`,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    textDecoration: "none",
+    fontSize: "1.2rem",
+    transition: "background 0.2s, color 0.2s",
   },
   copyright: {
     textAlign: "center" as const,
     color: theme.muted,
-    fontSize: "0.9rem",
+    fontSize: "0.85rem",
     paddingTop: 40,
     borderTop: "1px solid rgba(255,255,255,0.05)",
+    lineHeight: 1.6,
   },
   promoBanner: {
     background: `linear-gradient(135deg, ${theme.secondary}40, ${theme.primary}20)`,
