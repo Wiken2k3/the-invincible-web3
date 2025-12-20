@@ -313,7 +313,7 @@ const RewardsSection = () => (
           transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
           style={styles.coinVisual}
         >
-          $INV
+          $SUI
         </motion.div>
       </div>
     </GlassPanel>
