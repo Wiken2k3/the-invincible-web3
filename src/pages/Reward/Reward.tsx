@@ -198,7 +198,7 @@ export default function Reward() {
                           </td>
                           <td style={{...styles.td, textAlign: "right"}}>
                             <a 
-                              href={`https://suiscan.xyz/mainnet/tx/${tx.digest}`} 
+                              href={`https://suiscan.xyz/testnet/tx/${tx.digest}`} 
                               target="_blank" 
                               rel="noreferrer"
                               style={styles.link}
