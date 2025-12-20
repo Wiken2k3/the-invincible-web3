@@ -124,7 +124,7 @@ const LiveTicker = () => (
 /* ===================== HERO ===================== */
 
 const Hero = () => (
-  <Section center pt="140px" pb="80px">
+  <Section center pt="50px" pb="80px">
     <motion.div
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
