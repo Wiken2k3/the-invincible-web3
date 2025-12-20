@@ -300,7 +300,7 @@ const RewardsSection = () => (
           <span style={{ color: theme.accent }}>Earn</span> While You Play
         </h2>
         <p style={{ color: theme.muted, marginBottom: 24, lineHeight: 1.6 }}>
-          Staking $SIU tokens will unlock revenue sharing from the casino house edge.
+          Staking SUI tokens will unlock revenue sharing from the casino house edge.
           Exclusive NFTs will grant VIP access, rakeback, and daily airdrops.
         </p>
         <div style={{ display: "flex", gap: 16 }}>
@@ -313,7 +313,7 @@ const RewardsSection = () => (
           transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
           style={styles.coinVisual}
         >
-          $SUI
+          SUI
         </motion.div>
       </div>
     </GlassPanel>
